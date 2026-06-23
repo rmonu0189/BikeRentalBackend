@@ -54,5 +54,24 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
 INSERT OR IGNORE INTO users (id, phone, country_code, email, full_name, role, is_active)
 VALUES 
 ('user-1-uuid', '9109322140', '+91', 'user@local.test', 'John Doe', 'user', 1),
+('renter-1-uuid', '9109322142', '+91', 'renter@local.test', 'Renter User', 'renter', 1),
 ('admin-1-uuid', '9109322141', '+91', 'admin@local.test', 'Admin User', 'admin', 1);
+
+CREATE TABLE IF NOT EXISTS vehicles (
+    id TEXT PRIMARY KEY,
+    owner_id TEXT NOT NULL,
+    make TEXT NOT NULL,
+    model TEXT NOT NULL,
+    year INTEGER NOT NULL,
+    license_plate TEXT NOT NULL,
+    price_per_day REAL NOT NULL DEFAULT 0.0,
+    price_per_hour REAL NOT NULL DEFAULT 0.0,
+    status TEXT NOT NULL DEFAULT 'pending',
+    rejection_reason TEXT NULL,
+    reviewed_by TEXT NULL,
+    reviewed_at TEXT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
+);
 

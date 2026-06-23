@@ -657,6 +657,16 @@
           <a href="#get-admin-kyc-pending" data-section="get-admin-kyc-pending"><span class="method-tag method-tag-get">GET</span> /admin/kyc/pending</a>
           <a href="#post-admin-kyc-review" data-section="post-admin-kyc-review"><span class="method-tag method-tag-post">POST</span> /admin/kyc/review</a>
         </nav>
+        
+        <nav aria-label="Vehicles endpoints">
+          <p class="nav-heading">Vehicles Management</p>
+          <a href="#get-vehicles" data-section="get-vehicles"><span class="method-tag method-tag-get">GET</span> /vehicles</a>
+          <a href="#post-vehicles" data-section="post-vehicles"><span class="method-tag method-tag-post">POST</span> /vehicles</a>
+          <a href="#put-vehicles" data-section="put-vehicles"><span class="method-tag method-tag-put">PUT</span> /vehicles</a>
+          <a href="#delete-vehicles" data-section="delete-vehicles"><span class="method-tag method-tag-delete">DELETE</span> /vehicles</a>
+          <a href="#get-admin-vehicles-pending" data-section="get-admin-vehicles-pending"><span class="method-tag method-tag-get">GET</span> /admin/vehicles/pending</a>
+          <a href="#post-admin-vehicles-review" data-section="post-admin-vehicles-review"><span class="method-tag method-tag-post">POST</span> /admin/vehicles/review</a>
+        </nav>
 
       </div>
     </aside>
@@ -1035,6 +1045,209 @@
               <label class="try-lbl">JSON Body</label>
               <textarea class="api-tester-json" rows="4">{
   "submission_id": "",
+  "status": "approved",
+  "rejection_reason": ""
+}</textarea>
+            </div>
+            <button type="button" class="btn-api-send">Send request</button>
+            <div class="api-tester-out" style="display:none;">
+              <div class="api-tester-meta"></div>
+              <pre class="api-tester-res"></pre>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <!-- SECTION: VEHICLES -->
+
+      <!-- ENDPOINT: GET /vehicles -->
+      <section class="doc-section" id="get-vehicles" data-section="get-vehicles">
+        <h3><span class="method method-get">GET</span> <code class="path">/v1/vehicles</code></h3>
+        <p>List all approved vehicles (for bookings). If a regular user, only approved vehicles are returned. Renters also see their own pending/rejected vehicles. Admins see all vehicles. If an <code>id</code> query parameter is supplied, fetches that specific vehicle details. (Requires Bearer JWT Auth)</p>
+        
+        <h4>Query Parameters</h4>
+        <ul>
+          <li><code class="inline">id</code> (string, optional) — UUID of the vehicle to fetch.</li>
+        </ul>
+
+        <details class="api-tester" data-try-method="GET" data-try-path="/v1/vehicles" data-try-auth="bearer" data-try-no-json="1">
+          <summary>Try this request</summary>
+          <div class="api-tester-box">
+            <div>
+              <label class="try-lbl">Query Parameters (e.g. ?id=UUID)</label>
+              <input type="text" class="api-tester-query" placeholder="id=some-vehicle-uuid" />
+            </div>
+            <button type="button" class="btn-api-send">Send request</button>
+            <div class="api-tester-out" style="display:none;">
+              <div class="api-tester-meta"></div>
+              <pre class="api-tester-res"></pre>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <!-- ENDPOINT: POST /vehicles -->
+      <section class="doc-section" id="post-vehicles" data-section="post-vehicles">
+        <h3><span class="method method-post">POST</span> <code class="path">/v1/vehicles</code></h3>
+        <p>Adds a new vehicle to the system. Only Renters and Admins can add vehicles. (Requires Bearer JWT Auth)</p>
+        
+        <h4>Body Parameters</h4>
+        <ul>
+          <li><code class="inline">make</code> (string, required) — Brand of the vehicle (e.g., Honda, Trek).</li>
+          <li><code class="inline">model</code> (string, required) — Model name (e.g., Civic, FX 2).</li>
+          <li><code class="inline">year</code> (integer, required) — Year of manufacture (e.g., 2024).</li>
+          <li><code class="inline">license_plate</code> (string, required) — Registration license plate.</li>
+          <li><code class="inline">price_per_day</code> (number, required) — Price of rental per day.</li>
+          <li><code class="inline">price_per_hour</code> (number, required) — Price of rental per hour.</li>
+          <li><code class="inline">owner_id</code> (string, optional) — Owner UUID (Admins only, defaults to requester).</li>
+        </ul>
+        
+        <details class="sample-details">
+          <summary>Example Request Body</summary>
+          <pre>{
+  "make": "Honda",
+  "model": "Activa 6G",
+  "year": 2023,
+  "license_plate": "MH-12-AB-1234",
+  "price_per_day": 500.00,
+  "price_per_hour": 50.00
+}</pre>
+        </details>
+
+        <details class="api-tester" data-try-method="POST" data-try-path="/v1/vehicles" data-try-auth="bearer">
+          <summary>Try this request</summary>
+          <div class="api-tester-box">
+            <div class="api-tester-json-wrap">
+              <label class="try-lbl">JSON Body</label>
+              <textarea class="api-tester-json" rows="8">{
+  "make": "Honda",
+  "model": "Activa 6G",
+  "year": 2023,
+  "license_plate": "MH-12-AB-1234",
+  "price_per_day": 500.00,
+  "price_per_hour": 50.00
+}</textarea>
+            </div>
+            <button type="button" class="btn-api-send">Send request</button>
+            <div class="api-tester-out" style="display:none;">
+              <div class="api-tester-meta"></div>
+              <pre class="api-tester-res"></pre>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <!-- ENDPOINT: PUT /vehicles -->
+      <section class="doc-section" id="put-vehicles" data-section="put-vehicles">
+        <h3><span class="method method-put">PUT</span> <code class="path">/v1/vehicles</code></h3>
+        <p>Updates an existing vehicle. Renters can only update their own vehicles. Admins can update any. (Requires Bearer JWT Auth)</p>
+        
+        <h4>Body Parameters</h4>
+        <ul>
+          <li><code class="inline">id</code> (string, required) — UUID of the vehicle to update.</li>
+          <li><code class="inline">make</code> (string, optional).</li>
+          <li><code class="inline">model</code> (string, optional).</li>
+          <li><code class="inline">year</code> (integer, optional).</li>
+          <li><code class="inline">license_plate</code> (string, optional).</li>
+          <li><code class="inline">price_per_day</code> (number, optional).</li>
+          <li><code class="inline">price_per_hour</code> (number, optional).</li>
+        </ul>
+
+        <details class="api-tester" data-try-method="PUT" data-try-path="/v1/vehicles" data-try-auth="bearer">
+          <summary>Try this request</summary>
+          <div class="api-tester-box">
+            <div class="api-tester-json-wrap">
+              <label class="try-lbl">JSON Body</label>
+              <textarea class="api-tester-json" rows="8">{
+  "id": "",
+  "make": "Honda",
+  "model": "Activa 6G",
+  "year": 2024,
+  "license_plate": "MH-12-AB-1234",
+  "price_per_day": 550.00,
+  "price_per_hour": 55.00
+}</textarea>
+            </div>
+            <button type="button" class="btn-api-send">Send request</button>
+            <div class="api-tester-out" style="display:none;">
+              <div class="api-tester-meta"></div>
+              <pre class="api-tester-res"></pre>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <!-- ENDPOINT: DELETE /vehicles -->
+      <section class="doc-section" id="delete-vehicles" data-section="delete-vehicles">
+        <h3><span class="method method-delete">DELETE</span> <code class="path">/v1/vehicles</code></h3>
+        <p>Deletes a vehicle from the system. Renters can only delete their own vehicles. Admins can delete any. (Requires Bearer JWT Auth)</p>
+        
+        <h4>Query Parameters</h4>
+        <ul>
+          <li><code class="inline">id</code> (string, required) — UUID of the vehicle to delete.</li>
+        </ul>
+
+        <details class="api-tester" data-try-method="DELETE" data-try-path="/v1/vehicles" data-try-auth="bearer" data-try-no-json="1">
+          <summary>Try this request</summary>
+          <div class="api-tester-box">
+            <div>
+              <label class="try-lbl">Query Parameters (e.g. ?id=UUID)</label>
+              <input type="text" class="api-tester-query" placeholder="id=some-vehicle-uuid" />
+            </div>
+            <button type="button" class="btn-api-send">Send request</button>
+            <div class="api-tester-out" style="display:none;">
+              <div class="api-tester-meta"></div>
+              <pre class="api-tester-res"></pre>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <!-- ENDPOINT: GET /admin/vehicles/pending -->
+      <section class="doc-section" id="get-admin-vehicles-pending" data-section="get-admin-vehicles-pending">
+        <h3><span class="method method-get">GET</span> <code class="path">/v1/admin/vehicles/pending</code></h3>
+        <p>Lists all pending vehicles awaiting administrator verification. (Requires Bearer JWT Admin/Staff Auth)</p>
+
+        <details class="api-tester" data-try-method="GET" data-try-path="/v1/admin/vehicles/pending" data-try-auth="bearer" data-try-no-json="1">
+          <summary>Try this request</summary>
+          <div class="api-tester-box">
+            <button type="button" class="btn-api-send">Send request</button>
+            <div class="api-tester-out" style="display:none;">
+              <div class="api-tester-meta"></div>
+              <pre class="api-tester-res"></pre>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <!-- ENDPOINT: POST /admin/vehicles/review -->
+      <section class="doc-section" id="post-admin-vehicles-review" data-section="post-admin-vehicles-review">
+        <h3><span class="method method-post">POST</span> <code class="path">/v1/admin/vehicles/review</code></h3>
+        <p>Approves or rejects a renter's pending vehicle submission. (Requires Bearer JWT Admin/Staff Auth)</p>
+        
+        <h4>Body Parameters</h4>
+        <ul>
+          <li><code class="inline">vehicle_id</code> (string, required) — The UUID of the vehicle to review.</li>
+          <li><code class="inline">status</code> (string, required) — Either <code>"approved"</code> or <code>"rejected"</code>.</li>
+          <li><code class="inline">rejection_reason</code> (string, required if status is rejected) — Explanation for rejection.</li>
+        </ul>
+        
+        <details class="sample-details">
+          <summary>Example Request Body</summary>
+          <pre>{
+  "vehicle_id": "8a7b6c5d-4e3f-2a1b-0c9d-8e7f6a5b4c3d",
+  "status": "rejected",
+  "rejection_reason": "License plate number is not clear or incorrect."
+}</pre>
+        </details>
+
+        <details class="api-tester" data-try-method="POST" data-try-path="/v1/admin/vehicles/review" data-try-auth="bearer">
+          <summary>Try this request</summary>
+          <div class="api-tester-box">
+            <div class="api-tester-json-wrap">
+              <label class="try-lbl">JSON Body</label>
+              <textarea class="api-tester-json" rows="5">{
+  "vehicle_id": "",
   "status": "approved",
   "rejection_reason": ""
 }</textarea>

@@ -6,6 +6,7 @@ namespace App\Core;
 
 use App\Features\Authentication\Controllers\AuthController;
 use App\Features\Kyc\Controllers\KycController;
+use App\Features\Vehicles\Controllers\VehicleController;
 
 final class App
 {
@@ -26,6 +27,7 @@ final class App
 
         $auth = new AuthController();
         $kyc = new KycController();
+        $vehicles = new VehicleController();
 
         // Auth OTP login endpoints
         $router->add('POST', self::API_PREFIX . '/auth/otp/send', static function (Request $r) use ($auth): void {
@@ -72,6 +74,32 @@ final class App
 
         $router->add('POST', self::API_PREFIX . '/admin/kyc/review', static function (Request $r) use ($kyc): void {
             $kyc->review($r);
+        });
+
+        // Vehicles endpoints
+        $router->add('GET', self::API_PREFIX . '/vehicles', static function (Request $r) use ($vehicles): void {
+            $vehicles->getOrList($r);
+        });
+
+        $router->add('POST', self::API_PREFIX . '/vehicles', static function (Request $r) use ($vehicles): void {
+            $vehicles->add($r);
+        });
+
+        $router->add('PUT', self::API_PREFIX . '/vehicles', static function (Request $r) use ($vehicles): void {
+            $vehicles->update($r);
+        });
+
+        $router->add('DELETE', self::API_PREFIX . '/vehicles', static function (Request $r) use ($vehicles): void {
+            $vehicles->delete($r);
+        });
+
+        // Admin/Staff Vehicles review endpoints
+        $router->add('GET', self::API_PREFIX . '/admin/vehicles/pending', static function (Request $r) use ($vehicles): void {
+            $vehicles->listPending($r);
+        });
+
+        $router->add('POST', self::API_PREFIX . '/admin/vehicles/review', static function (Request $r) use ($vehicles): void {
+            $vehicles->review($r);
         });
 
         $router->dispatch($request);

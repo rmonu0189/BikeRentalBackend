@@ -122,12 +122,24 @@ try {
             $insertStmt = $pdo->prepare("INSERT INTO migrations (migration) VALUES (:migration)");
             $insertStmt->execute(['migration' => $name]);
 
-            $pdo->commit();
+            try {
+                if ($pdo->inTransaction()) {
+                    $pdo->commit();
+                }
+            } catch (PDOException $e) {
+                if (!str_contains($e->getMessage(), 'There is no active transaction')) {
+                    throw $e;
+                }
+            }
             echo "Migrated:  {$name} (Success)\n";
             $executedCount++;
         } catch (Throwable $e) {
-            if ($pdo->inTransaction()) {
-                $pdo->rollBack();
+            try {
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+            } catch (Throwable) {
+                // Ignore rollback failure if transaction already committed implicitly
             }
             throw $e;
         }
