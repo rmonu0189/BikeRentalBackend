@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Core;
 
 use App\Features\Authentication\Controllers\AuthController;
+use App\Features\Kyc\Controllers\KycController;
 
 final class App
 {
@@ -24,6 +25,7 @@ final class App
         }
 
         $auth = new AuthController();
+        $kyc = new KycController();
 
         // Auth OTP login endpoints
         $router->add('POST', self::API_PREFIX . '/auth/otp/send', static function (Request $r) use ($auth): void {
@@ -52,6 +54,24 @@ final class App
 
         $router->add('POST', self::API_PREFIX . '/auth/delete-account', static function (Request $r) use ($auth): void {
             $auth->deleteAccount($r);
+        });
+
+        // User KYC endpoints
+        $router->add('POST', self::API_PREFIX . '/kyc/submit', static function (Request $r) use ($kyc): void {
+            $kyc->submit($r);
+        });
+
+        $router->add('GET', self::API_PREFIX . '/kyc/status', static function (Request $r) use ($kyc): void {
+            $kyc->status($r);
+        });
+
+        // Admin/Staff KYC review endpoints
+        $router->add('GET', self::API_PREFIX . '/admin/kyc/pending', static function (Request $r) use ($kyc): void {
+            $kyc->listPending($r);
+        });
+
+        $router->add('POST', self::API_PREFIX . '/admin/kyc/review', static function (Request $r) use ($kyc): void {
+            $kyc->review($r);
         });
 
         $router->dispatch($request);

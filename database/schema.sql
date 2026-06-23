@@ -10,11 +10,29 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) NULL,
     full_name VARCHAR(255) NULL,
     role VARCHAR(50) NOT NULL DEFAULT 'user',
+    kyc_status VARCHAR(20) NOT NULL DEFAULT 'unverified',
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE KEY uq_users_country_phone (country_code, phone),
     UNIQUE KEY uq_users_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS kyc_submissions (
+    id CHAR(36) NOT NULL,
+    user_id CHAR(36) NOT NULL,
+    address_proof_path VARCHAR(512) NOT NULL,
+    identity_proof_path VARCHAR(512) NOT NULL,
+    address_details TEXT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    rejection_reason VARCHAR(512) NULL,
+    reviewed_by CHAR(36) NULL,
+    reviewed_at DATETIME NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_kyc_user (user_id),
+    CONSTRAINT fk_kyc_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS phone_otp_challenges (

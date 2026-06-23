@@ -7,8 +7,24 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT NULL,
     full_name TEXT NULL,
     role TEXT NOT NULL DEFAULT 'user',
+    kyc_status TEXT NOT NULL DEFAULT 'unverified',
     is_active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS kyc_submissions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    address_proof_path TEXT NOT NULL,
+    identity_proof_path TEXT NOT NULL,
+    address_details TEXT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    rejection_reason TEXT NULL,
+    reviewed_by TEXT NULL,
+    reviewed_at TEXT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_users_phone ON users(country_code, phone);

@@ -649,6 +649,14 @@
           <a href="#patch-auth-me" data-section="patch-auth-me"><span class="method-tag method-tag-patch">PATCH</span> /auth/me</a>
           <a href="#post-auth-delete-account" data-section="post-auth-delete-account"><span class="method-tag method-tag-post">POST</span> /auth/delete-account</a>
         </nav>
+        
+        <nav aria-label="KYC endpoints">
+          <p class="nav-heading">KYC Verification</p>
+          <a href="#post-kyc-submit" data-section="post-kyc-submit"><span class="method-tag method-tag-post">POST</span> /kyc/submit</a>
+          <a href="#get-kyc-status" data-section="get-kyc-status"><span class="method-tag method-tag-get">GET</span> /kyc/status</a>
+          <a href="#get-admin-kyc-pending" data-section="get-admin-kyc-pending"><span class="method-tag method-tag-get">GET</span> /admin/kyc/pending</a>
+          <a href="#post-admin-kyc-review" data-section="post-admin-kyc-review"><span class="method-tag method-tag-post">POST</span> /admin/kyc/review</a>
+        </nav>
 
       </div>
     </aside>
@@ -928,6 +936,118 @@
         </details>
       </section>
 
+      <!-- ENDPOINT: POST /kyc/submit -->
+      <section class="doc-section" id="post-kyc-submit" data-section="post-kyc-submit">
+        <h3><span class="method method-post">POST</span> <code class="path">/v1/kyc/submit</code></h3>
+        <p>Submits address and identity proof documents for KYC verification. (Requires Bearer JWT Auth)</p>
+        
+        <h4>Multipart Form Parameters</h4>
+        <ul>
+          <li><code class="inline">address_proof</code> (file, required) — PDF, JPEG, or PNG document (max 5MB).</li>
+          <li><code class="inline">identity_proof</code> (file, required) — PDF, JPEG, or PNG document (max 5MB).</li>
+          <li><code class="inline">address_details</code> (string, optional) — Textual representation of the address.</li>
+        </ul>
+
+        <details class="api-tester" data-try-method="POST" data-try-path="/v1/kyc/submit" data-try-auth="bearer" data-try-no-json="1">
+          <summary>Try this request</summary>
+          <div class="api-tester-box">
+            <p class="api-tester-warn" style="display:none;"></p>
+            <div>
+              <label class="try-lbl">Address Proof File (PDF/JPG/PNG)</label>
+              <input type="file" class="api-tester-file-address" style="display:block; margin: 0.5rem 0; color: #fff;" />
+            </div>
+            <div>
+              <label class="try-lbl">Identity Proof File (PDF/JPG/PNG)</label>
+              <input type="file" class="api-tester-file-identity" style="display:block; margin: 0.5rem 0; color: #fff;" />
+            </div>
+            <div>
+              <label class="try-lbl">Address Details (Optional)</label>
+              <input type="text" class="api-tester-text-details" placeholder="123 Main St, Springfield" style="width:100%; padding:0.55rem; background:#090d16; color:#fff; border:1px solid var(--card-border); border-radius:6px; margin: 0.5rem 0;" />
+            </div>
+            <button type="button" class="btn-api-send">Send request</button>
+            <div class="api-tester-out" style="display:none;">
+              <div class="api-tester-meta"></div>
+              <pre class="api-tester-res"></pre>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <!-- ENDPOINT: GET /kyc/status -->
+      <section class="doc-section" id="get-kyc-status" data-section="get-kyc-status">
+        <h3><span class="method method-get">GET</span> <code class="path">/v1/kyc/status</code></h3>
+        <p>Fetches the current user's KYC verification status and their last submission history. (Requires Bearer JWT Auth)</p>
+        
+        <details class="api-tester" data-try-method="GET" data-try-path="/v1/kyc/status" data-try-auth="bearer" data-try-no-json="1">
+          <summary>Try this request</summary>
+          <div class="api-tester-box">
+            <button type="button" class="btn-api-send">Send request</button>
+            <div class="api-tester-out" style="display:none;">
+              <div class="api-tester-meta"></div>
+              <pre class="api-tester-res"></pre>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <!-- ENDPOINT: GET /admin/kyc/pending -->
+      <section class="doc-section" id="get-admin-kyc-pending" data-section="get-admin-kyc-pending">
+        <h3><span class="method method-get">GET</span> <code class="path">/v1/admin/kyc/pending</code></h3>
+        <p>Lists all pending KYC submissions awaiting verification. (Requires Bearer JWT Admin/Staff Auth)</p>
+        
+        <details class="api-tester" data-try-method="GET" data-try-path="/v1/admin/kyc/pending" data-try-auth="bearer" data-try-no-json="1">
+          <summary>Try this request</summary>
+          <div class="api-tester-box">
+            <button type="button" class="btn-api-send">Send request</button>
+            <div class="api-tester-out" style="display:none;">
+              <div class="api-tester-meta"></div>
+              <pre class="api-tester-res"></pre>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <!-- ENDPOINT: POST /admin/kyc/review -->
+      <section class="doc-section" id="post-admin-kyc-review" data-section="post-admin-kyc-review">
+        <h3><span class="method method-post">POST</span> <code class="path">/v1/admin/kyc/review</code></h3>
+        <p>Approves or rejects a user's pending KYC submission. (Requires Bearer JWT Admin/Staff Auth)</p>
+        
+        <h4>Body Parameters</h4>
+        <ul>
+          <li><code class="inline">submission_id</code> (string, required) — The UUID of the submission to review.</li>
+          <li><code class="inline">status</code> (string, required) — Either <code class="inline">"approved"</code> or <code class="inline">"rejected"</code>.</li>
+          <li><code class="inline">rejection_reason</code> (string, required if status is rejected) — Explanation for rejection.</li>
+        </ul>
+        
+        <details class="sample-details">
+          <summary>Example Request Body</summary>
+          <pre>{
+  "submission_id": "8a7b6c5d-4e3f-2a1b-0c9d-8e7f6a5b4c3d",
+  "status": "rejected",
+  "rejection_reason": "Identity proof is blurry."
+}</pre>
+        </details>
+
+        <details class="api-tester" data-try-method="POST" data-try-path="/v1/admin/kyc/review" data-try-auth="bearer">
+          <summary>Try this request</summary>
+          <div class="api-tester-box">
+            <div class="api-tester-json-wrap">
+              <label class="try-lbl">JSON Body</label>
+              <textarea class="api-tester-json" rows="4">{
+  "submission_id": "",
+  "status": "approved",
+  "rejection_reason": ""
+}</textarea>
+            </div>
+            <button type="button" class="btn-api-send">Send request</button>
+            <div class="api-tester-out" style="display:none;">
+              <div class="api-tester-meta"></div>
+              <pre class="api-tester-res"></pre>
+            </div>
+          </div>
+        </details>
+      </section>
+
     </main>
   </div>
 
@@ -1104,13 +1224,15 @@
         return await refreshAccessToken();
       }
       
-      function buildCurl(method, url, hdrs, body) {
+      function buildCurl(method, url, hdrs, body, isMultipart) {
         var parts = ["curl -sS -i", "-X", "'" + method + "'"];
         parts.push("'" + url.replace(/'/g, "'\\''") + "'");
         Object.keys(hdrs).forEach(function (k) {
           parts.push("-H", "'" + k + ": " + String(hdrs[k]).replace(/'/g, "'\\''") + "'");
         });
-        if (body != null && body !== "") {
+        if (isMultipart) {
+          parts.push("-F 'address_proof=@address_proof.png'", "-F 'identity_proof=@identity_proof.png'", "-F 'address_details=\"123 Street\"'");
+        } else if (body != null && body !== "") {
           parts.push("-d", "'" + String(body).replace(/'/g, "'\\''") + "'");
         }
         return parts.join(" ");
@@ -1139,6 +1261,7 @@
         
         var headers = {};
         var bodyStr = null;
+        var isMultipart = (path === "/v1/kyc/submit");
         
         if (auth === "bearer") {
           await ensureFreshAccess();
@@ -1154,14 +1277,30 @@
           headers["Authorization"] = "Bearer " + acc;
         }
         
-        if (!noJson && method !== "GET" && method !== "HEAD") {
+        var fetchOpts = { method: method, headers: headers };
+
+        if (isMultipart) {
+          var fd = new FormData();
+          var addrFileEl = box.querySelector(".api-tester-file-address");
+          var idFileEl = box.querySelector(".api-tester-file-identity");
+          var addrDetailsEl = box.querySelector(".api-tester-text-details");
+          
+          if (addrFileEl && addrFileEl.files[0]) {
+            fd.append("address_proof", addrFileEl.files[0]);
+          }
+          if (idFileEl && idFileEl.files[0]) {
+            fd.append("identity_proof", idFileEl.files[0]);
+          }
+          if (addrDetailsEl && addrDetailsEl.value.trim()) {
+            fd.append("address_details", addrDetailsEl.value.trim());
+          }
+          fetchOpts.body = fd;
+        } else if (!noJson && method !== "GET" && method !== "HEAD") {
           var ta = box.querySelector(".api-tester-json");
           bodyStr = (ta && ta.value) || "{}";
           headers["Content-Type"] = "application/json";
+          fetchOpts.body = bodyStr;
         }
-        
-        var fetchOpts = { method: method, headers: headers };
-        if (bodyStr !== null) fetchOpts.body = bodyStr;
         
         var res;
         try {
@@ -1171,7 +1310,7 @@
           meta.className = "api-tester-meta status-5xx";
           resPre.textContent = String(err);
           out.style.display = "block";
-          if (curlPre) curlPre.textContent = buildCurl(method, url, headers, bodyStr);
+          if (curlPre) curlPre.textContent = buildCurl(method, url, headers, bodyStr, isMultipart);
           return;
         }
         
@@ -1191,7 +1330,7 @@
           resPre.textContent = resText || "(empty body)";
         }
         out.style.display = "block";
-        if (curlPre) curlPre.textContent = buildCurl(method, url, headers, bodyStr);
+        if (curlPre) curlPre.textContent = buildCurl(method, url, headers, bodyStr, isMultipart);
       }
       
       document.querySelectorAll(".api-tester .btn-api-send").forEach(function (btn) {

@@ -36,7 +36,7 @@ final class UserRepository
     public static function findById(string $id): ?array
     {
         $stmt = Database::connection()->prepare(
-            'SELECT id, phone, country_code, email, full_name, is_active, role, created_at FROM users WHERE id = :id LIMIT 1'
+            'SELECT id, phone, country_code, email, full_name, is_active, role, kyc_status, created_at FROM users WHERE id = :id LIMIT 1'
         );
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -53,6 +53,7 @@ final class UserRepository
             'full_name' => $row['full_name'] !== null && $row['full_name'] !== '' ? (string) $row['full_name'] : null,
             'is_active' => (bool) (int) $row['is_active'],
             'role' => (string) ($row['role'] ?? self::DEFAULT_ROLE),
+            'kyc_status' => (string) ($row['kyc_status'] ?? 'unverified'),
             'created_at' => (string) $row['created_at'],
         ];
     }

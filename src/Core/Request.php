@@ -137,4 +137,17 @@ final class Request
 
         return null;
     }
+
+    public function post(string $key): ?string
+    {
+        $value = $_POST[$key] ?? null;
+        if (is_string($value)) {
+            return $value;
+        }
+        if (is_numeric($value)) {
+            return (string) $value;
+        }
+
+        return null;
+    }
 }
