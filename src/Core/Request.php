@@ -44,6 +44,23 @@ final class Request
             return $value;
         }
 
+        // Try REDIRECT_ prefix (common in Apache rewrite environments)
+        $redirectKey = 'REDIRECT_' . $normalized;
+        $redirectValue = $_SERVER[$redirectKey] ?? null;
+        if (is_string($redirectValue) && $redirectValue !== '') {
+            return $redirectValue;
+        }
+
+        // Try getallheaders() if function exists (common in Apache/FastCGI)
+        if (function_exists('getallheaders')) {
+            $all = getallheaders();
+            foreach ($all as $k => $v) {
+                if (strcasecmp($k, $name) === 0) {
+                    return $v;
+                }
+            }
+        }
+
         // POST/PUT bodies: PHP often exposes these without the HTTP_ prefix.
         if (strcasecmp($name, 'Content-Type') === 0) {
             $direct = $_SERVER['CONTENT_TYPE'] ?? null;
