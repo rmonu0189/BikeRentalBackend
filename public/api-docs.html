@@ -482,6 +482,51 @@
       border-radius: 0 6px 6px 0;
     }
     
+    /* Example cURL Request styling */
+    .curl-snippet-container {
+      margin: 1.5rem 0;
+    }
+    .curl-header {
+      font-size: 0.75rem;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin: 0 0 0.5rem;
+    }
+    .curl-block {
+      position: relative;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .curl-block pre {
+      border: none;
+      border-radius: 0;
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 1rem 3.5rem 1rem 1rem;
+      font-size: 0.8rem;
+    }
+    .copy-curl-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      font-size: 0.65rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .copy-curl-btn:hover {
+      background: rgba(255,255,255,0.15);
+    }
+    
     /* RESPONSE PAYLOAD TABS */
     .tabs-container {
       margin: 1.5rem 0;
@@ -1051,7 +1096,19 @@
             </table>
           </div>
 
-          <h4>Responses &amp; Status Codes</h4>
+                    <div class="curl-snippet-container">
+            <h5 class="curl-header">Example cURL Request</h5>
+            <div class="curl-block">
+              <pre class="curl-snippet">curl -X POST http://localhost:8000/v1/auth/otp/send \
+  -H "Content-Type: application/json" \
+  -d '{
+    "phone": "+919109322140",
+    "client": "mobile"
+  }'</pre>
+              <button type="button" class="copy-curl-btn">Copy</button>
+            </div>
+          </div>
+\n<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -1152,7 +1209,20 @@
             </table>
           </div>
 
-          <h4>Responses &amp; Status Codes</h4>
+                    <div class="curl-snippet-container">
+            <h5 class="curl-header">Example cURL Request</h5>
+            <div class="curl-block">
+              <pre class="curl-snippet">curl -X POST http://localhost:8000/v1/auth/otp/verify \
+  -H "Content-Type: application/json" \
+  -d '{
+    "phone": "+919109322140",
+    "code": "123456",
+    "client": "mobile"
+  }'</pre>
+              <button type="button" class="copy-curl-btn">Copy</button>
+            </div>
+          </div>
+\n<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -1254,7 +1324,18 @@
             </table>
           </div>
 
-          <h4>Responses &amp; Status Codes</h4>
+                    <div class="curl-snippet-container">
+            <h5 class="curl-header">Example cURL Request</h5>
+            <div class="curl-block">
+              <pre class="curl-snippet">curl -X POST http://localhost:8000/v1/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{
+    "refresh_token": "YOUR_REFRESH_TOKEN"
+  }'</pre>
+              <button type="button" class="copy-curl-btn">Copy</button>
+            </div>
+          </div>
+\n<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -1330,7 +1411,18 @@
             </table>
           </div>
 
-          <h4>Responses &amp; Status Codes</h4>
+                    <div class="curl-snippet-container">
+            <h5 class="curl-header">Example cURL Request</h5>
+            <div class="curl-block">
+              <pre class="curl-snippet">curl -X POST http://localhost:8000/v1/auth/logout \
+  -H "Content-Type: application/json" \
+  -d '{
+    "refresh_token": "YOUR_REFRESH_TOKEN"
+  }'</pre>
+              <button type="button" class="copy-curl-btn">Copy</button>
+            </div>
+          </div>
+\n<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -1367,7 +1459,15 @@
           </div>
           <p>Retrieves the details and current system role (user, renter, admin, staff) of the currently authenticated identity.</p>
           
-          <h4>Responses &amp; Status Codes</h4>
+                    <div class="curl-snippet-container">
+            <h5 class="curl-header">Example cURL Request</h5>
+            <div class="curl-block">
+              <pre class="curl-snippet">curl -X GET http://localhost:8000/v1/auth/me \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"</pre>
+              <button type="button" class="copy-curl-btn">Copy</button>
+            </div>
+          </div>
+\n<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -1442,7 +1542,19 @@
             </table>
           </div>
 
-          <h4>Responses &amp; Status Codes</h4>
+                    <div class="curl-snippet-container">
+            <h5 class="curl-header">Example cURL Request</h5>
+            <div class="curl-block">
+              <pre class="curl-snippet">curl -X PATCH http://localhost:8000/v1/auth/me \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "full_name": "Jane Doe"
+  }'</pre>
+              <button type="button" class="copy-curl-btn">Copy</button>
+            </div>
+          </div>
+\n<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -1532,7 +1644,20 @@
             </table>
           </div>
 
-          <h4>Responses &amp; Status Codes</h4>
+                    <div class="curl-snippet-container">
+            <h5 class="curl-header">Example cURL Request</h5>
+            <div class="curl-block">
+              <pre class="curl-snippet">curl -X POST http://localhost:8000/v1/auth/delete-account \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "reason_code": "switching_service",
+    "reason_text": "Moving to another town"
+  }'</pre>
+              <button type="button" class="copy-curl-btn">Copy</button>
+            </div>
+          </div>
+\n<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -1604,7 +1729,18 @@
             </table>
           </div>
 
-          <h4>Responses &amp; Status Codes</h4>
+                    <div class="curl-snippet-container">
+            <h5 class="curl-header">Example cURL Request</h5>
+            <div class="curl-block">
+              <pre class="curl-snippet">curl -X POST http://localhost:8000/v1/kyc/submit \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -F "address_proof=@/path/to/address_proof.pdf" \
+  -F "identity_proof=@/path/to/identity_proof.pdf" \
+  -F "address_details=123 Main St, Springfield"</pre>
+              <button type="button" class="copy-curl-btn">Copy</button>
+            </div>
+          </div>
+\n<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '201')">201 Created <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -1666,7 +1802,15 @@
           </div>
           <p>Fetches the active user's KYC verification status (`none`, `pending`, `verified`, `rejected`) and logs their last submission record.</p>
           
-          <h4>Responses &amp; Status Codes</h4>
+                    <div class="curl-snippet-container">
+            <h5 class="curl-header">Example cURL Request</h5>
+            <div class="curl-block">
+              <pre class="curl-snippet">curl -X GET http://localhost:8000/v1/kyc/status \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"</pre>
+              <button type="button" class="copy-curl-btn">Copy</button>
+            </div>
+          </div>
+\n<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -1710,7 +1854,15 @@
           </div>
           <p>Lists all pending KYC user submissions awaiting administrator review.</p>
           
-          <h4>Responses &amp; Status Codes</h4>
+                    <div class="curl-snippet-container">
+            <h5 class="curl-header">Example cURL Request</h5>
+            <div class="curl-block">
+              <pre class="curl-snippet">curl -X GET http://localhost:8000/v1/admin/kyc/pending \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"</pre>
+              <button type="button" class="copy-curl-btn">Copy</button>
+            </div>
+          </div>
+\n<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -1796,7 +1948,21 @@
             </table>
           </div>
 
-          <h4>Responses &amp; Status Codes</h4>
+                    <div class="curl-snippet-container">
+            <h5 class="curl-header">Example cURL Request</h5>
+            <div class="curl-block">
+              <pre class="curl-snippet">curl -X POST http://localhost:8000/v1/admin/kyc/review \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "submission_id": "SUBMISSION_UUID",
+    "status": "approved",
+    "rejection_reason": ""
+  }'</pre>
+              <button type="button" class="copy-curl-btn">Copy</button>
+            </div>
+          </div>
+\n<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -1876,7 +2042,15 @@
             </table>
           </div>
 
-          <h4>Responses &amp; Status Codes</h4>
+                    <div class="curl-snippet-container">
+            <h5 class="curl-header">Example cURL Request</h5>
+            <div class="curl-block">
+              <pre class="curl-snippet">curl -X GET http://localhost:8000/v1/vehicles \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"</pre>
+              <button type="button" class="copy-curl-btn">Copy</button>
+            </div>
+          </div>
+\n<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK (List) <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -2014,7 +2188,24 @@
             </table>
           </div>
 
-          <h4>Responses &amp; Status Codes</h4>
+                    <div class="curl-snippet-container">
+            <h5 class="curl-header">Example cURL Request</h5>
+            <div class="curl-block">
+              <pre class="curl-snippet">curl -X POST http://localhost:8000/v1/vehicles \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "make": "Honda",
+    "model": "Activa 6G",
+    "year": 2023,
+    "license_plate": "MH-12-AB-1234",
+    "price_per_day": 500.00,
+    "price_per_hour": 50.00
+  }'</pre>
+              <button type="button" class="copy-curl-btn">Copy</button>
+            </div>
+          </div>
+\n<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '201')">201 Created <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -2140,7 +2331,25 @@
             </table>
           </div>
 
-          <h4>Responses &amp; Status Codes</h4>
+                    <div class="curl-snippet-container">
+            <h5 class="curl-header">Example cURL Request</h5>
+            <div class="curl-block">
+              <pre class="curl-snippet">curl -X PUT http://localhost:8000/v1/vehicles \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "VEHICLE_UUID",
+    "make": "Honda",
+    "model": "Activa 6G",
+    "year": 2024,
+    "license_plate": "MH-12-AB-1234",
+    "price_per_day": 550.00,
+    "price_per_hour": 55.00
+  }'</pre>
+              <button type="button" class="copy-curl-btn">Copy</button>
+            </div>
+          </div>
+\n<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -2220,7 +2429,15 @@
             </table>
           </div>
 
-          <h4>Responses &amp; Status Codes</h4>
+                    <div class="curl-snippet-container">
+            <h5 class="curl-header">Example cURL Request</h5>
+            <div class="curl-block">
+              <pre class="curl-snippet">curl -X DELETE "http://localhost:8000/v1/vehicles?id=VEHICLE_UUID" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"</pre>
+              <button type="button" class="copy-curl-btn">Copy</button>
+            </div>
+          </div>
+\n<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -2268,7 +2485,15 @@
           </div>
           <p>Lists all pending vehicles currently awaiting administrator review.</p>
           
-          <h4>Responses &amp; Status Codes</h4>
+                    <div class="curl-snippet-container">
+            <h5 class="curl-header">Example cURL Request</h5>
+            <div class="curl-block">
+              <pre class="curl-snippet">curl -X GET http://localhost:8000/v1/admin/vehicles/pending \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"</pre>
+              <button type="button" class="copy-curl-btn">Copy</button>
+            </div>
+          </div>
+\n<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -2354,7 +2579,21 @@
             </table>
           </div>
 
-          <h4>Responses &amp; Status Codes</h4>
+                    <div class="curl-snippet-container">
+            <h5 class="curl-header">Example cURL Request</h5>
+            <div class="curl-block">
+              <pre class="curl-snippet">curl -X POST http://localhost:8000/v1/admin/vehicles/review \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "vehicle_id": "VEHICLE_UUID",
+    "status": "approved",
+    "rejection_reason": ""
+  }'</pre>
+              <button type="button" class="copy-curl-btn">Copy</button>
+            </div>
+          </div>
+\n<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -2455,11 +2694,30 @@
         return "http://localhost:8000";
       }
       
+      function updateCurlSnippets() {
+        var acc = getAccess() || "YOUR_ACCESS_TOKEN";
+        var ref = getRefresh() || "YOUR_REFRESH_TOKEN";
+        var baseUrlValue = base();
+        document.querySelectorAll(".curl-snippet").forEach(function (pre) {
+          var original = pre.getAttribute("data-original-template");
+          if (!original) {
+            original = pre.textContent;
+            pre.setAttribute("data-original-template", original);
+          }
+          var updated = original
+            .replace(/http:\/\/localhost:8000/g, baseUrlValue)
+            .replace(/YOUR_ACCESS_TOKEN/g, acc)
+            .replace(/YOUR_REFRESH_TOKEN/g, ref);
+          pre.textContent = updated;
+        });
+      }
+
       var baseInput = document.getElementById("baseUrl");
       if (baseInput) {
         baseInput.value = base();
         baseInput.addEventListener("input", function() {
           prefillRefreshTextareas();
+          updateCurlSnippets();
         });
       }
       
@@ -2525,6 +2783,7 @@
           roleEl.textContent = "";
           roleEl.style.display = "none";
           btnOut.style.display = "none";
+          updateCurlSnippets();
           return;
         }
         var u = null;
@@ -2542,6 +2801,7 @@
         roleEl.textContent = "Role: " + role;
         roleEl.style.display = "inline-block";
         btnOut.style.display = "inline-block";
+        updateCurlSnippets();
       }
       
       function prefillRefreshTextareas() {
@@ -2903,6 +3163,7 @@
       }
       window.addEventListener("hashchange", syncFromHash);
       syncFromHash();
+      updateCurlSnippets();
 
       // Dynamically wrap Responses & Status Codes in collapsible details cards
       document.querySelectorAll(".tabs-container").forEach(function (container) {
