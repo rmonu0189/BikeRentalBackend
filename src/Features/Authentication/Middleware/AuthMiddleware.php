@@ -1,0 +1,86 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Features\Authentication\Middleware;
+
+use App\Core\Jwt;
+use App\Core\Request;
+use App\Core\Response;
+use App\Features\Authentication\Repositories\UserRepository;
+
+final class AuthMiddleware
+{
+    /**
+     * Validates Bearer JWT and that the user exists and is active.
+     */
+    public static function requireAuth(Request $request): ?array
+    {
+        $header = $request->header('Authorization');
+        if ($header === null || !str_starts_with($header, 'Bearer ')) {
+            Response::json(['error' => 'Unauthorized'], 401);
+            return null;
+        }
+
+        $token = trim(substr($header, 7));
+        $claims = Jwt::verify($token);
+        if ($claims === null) {
+            Response::json(['error' => 'Unauthorized'], 401);
+            return null;
+        }
+
+        $sub = (string) ($claims['sub'] ?? '');
+        if ($sub === '') {
+            Response::json(['error' => 'Unauthorized'], 401);
+            return null;
+        }
+
+        $active = UserRepository::findActiveFlag($sub);
+        if ($active === null) {
+            Response::json(['error' => 'Unauthorized'], 401);
+            return null;
+        }
+
+        if (!$active) {
+            Response::json(['error' => 'Account is disabled'], 403);
+            return null;
+        }
+
+        return $claims;
+    }
+
+    /** Roles allowed to call admin API routes (JWT `role` claim). */
+    private const ADMIN_PANEL_ROLES = ['admin', 'staff', 'manager'];
+
+    /**
+     * Valid access JWT, active user, and role allowed for the admin console.
+     * Sends 401 / 403 and returns null on failure.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function requireAdmin(Request $request): ?array
+    {
+        $claims = self::requireAuth($request);
+        if ($claims === null) {
+            return null;
+        }
+
+        $role = (string) ($claims['role'] ?? '');
+        if (!in_array($role, self::ADMIN_PANEL_ROLES, true)) {
+            Response::json(['error' => 'Forbidden'], 403);
+            return null;
+        }
+
+        return $claims;
+    }
+
+    public static function requireRole(array $claims, string $role): bool
+    {
+        if (($claims['role'] ?? null) !== $role) {
+            Response::json(['error' => 'Forbidden'], 403);
+            return false;
+        }
+
+        return true;
+    }
+}
