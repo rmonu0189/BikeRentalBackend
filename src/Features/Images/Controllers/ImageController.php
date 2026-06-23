@@ -28,7 +28,7 @@ final class ImageController
     }
 
     /**
-     * Upload one or more image files.
+     * Upload a single image file.
      */
     public function upload(Request $request): void
     {
@@ -37,33 +37,45 @@ final class ImageController
             return;
         }
 
-        if (!isset($_FILES['images']) || !is_array($_FILES['images']['name'])) {
-            throw new ValidationException('Missing required image files.', [
-                'images' => 'You must upload at least 1 image.'
+        if (!isset($_FILES['image']) || $_FILES['image']['error'] === UPLOAD_ERR_NO_FILE) {
+            throw new ValidationException('Missing required image file.', [
+                'image' => 'You must upload an image.'
             ]);
         }
 
-        $names = $_FILES['images']['name'];
-        $tmpNames = $_FILES['images']['tmp_name'];
-        $errors = $_FILES['images']['error'];
-        $sizes = $_FILES['images']['size'];
-
-        $validFileCount = 0;
-        for ($i = 0; $i < count($names); $i++) {
-            if ($errors[$i] !== UPLOAD_ERR_NO_FILE) {
-                $validFileCount++;
-            }
-        }
-
-        if ($validFileCount < 1 || $validFileCount > 5) {
-            throw new ValidationException('Invalid number of image files.', [
-                'images' => 'You must upload between 1 and 5 files.'
+        $file = $_FILES['image'];
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            throw new ValidationException('Image upload failed.', [
+                'image' => 'Upload error code: ' . $file['error']
             ]);
         }
 
-        $uploadedImages = [];
+        if ($file['size'] > self::MAX_FILE_SIZE) {
+            throw new ValidationException('File size limit exceeded.', [
+                'image' => 'File must be under 5MB.'
+            ]);
+        }
+
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        if (!in_array($ext, self::ALLOWED_EXTENSIONS, true)) {
+            throw new ValidationException('Unsupported file format.', [
+                'image' => 'File format not supported. Allowed formats: ' . implode(', ', self::ALLOWED_EXTENSIONS)
+            ]);
+        }
+
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        if ($finfo === false) {
+            throw new HttpException('Internal server error during file validation.', 500);
+        }
+        $mimeType = finfo_file($finfo, $file['tmp_name']);
+
+        if (!in_array($mimeType, self::ALLOWED_MIME_TYPES, true)) {
+            throw new ValidationException('Unsupported file type.', [
+                'image' => 'File must be a valid JPEG or PNG image.'
+            ]);
+        }
+
         $userId = (string) $claims['sub'];
-
         $uploadDir = __DIR__ . '/../../../../storage/uploads';
         if (!is_dir($uploadDir)) {
             if (!mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
@@ -71,91 +83,35 @@ final class ImageController
             }
         }
 
-        for ($i = 0; $i < count($names); $i++) {
-            if ($errors[$i] === UPLOAD_ERR_NO_FILE) {
-                continue;
-            }
+        $imageId = Uuid::v4();
+        $filename = $imageId . '.' . $ext;
+        $destination = $uploadDir . '/' . $filename;
 
-            if ($errors[$i] !== UPLOAD_ERR_OK) {
-                $this->cleanupPhysicalFiles($uploadedImages);
-                throw new ValidationException('Image upload failed.', [
-                    'images' => 'Upload error code: ' . $errors[$i] . ' for file ' . $names[$i]
-                ]);
-            }
-
-            if ($sizes[$i] > self::MAX_FILE_SIZE) {
-                $this->cleanupPhysicalFiles($uploadedImages);
-                throw new ValidationException('File size limit exceeded.', [
-                    'images' => 'File ' . $names[$i] . ' must be under 5MB.'
-                ]);
-            }
-
-            $ext = strtolower(pathinfo($names[$i], PATHINFO_EXTENSION));
-            if (!in_array($ext, self::ALLOWED_EXTENSIONS, true)) {
-                $this->cleanupPhysicalFiles($uploadedImages);
-                throw new ValidationException('Unsupported file format.', [
-                    'images' => 'File ' . $names[$i] . ' format not supported. Allowed formats: ' . implode(', ', self::ALLOWED_EXTENSIONS)
-                ]);
-            }
-
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            if ($finfo === false) {
-                $this->cleanupPhysicalFiles($uploadedImages);
-                throw new HttpException('Internal server error during file validation.', 500);
-            }
-            $mimeType = finfo_file($finfo, $tmpNames[$i]);
-
-            if (!in_array($mimeType, self::ALLOWED_MIME_TYPES, true)) {
-                $this->cleanupPhysicalFiles($uploadedImages);
-                throw new ValidationException('Unsupported file type.', [
-                    'images' => 'File ' . $names[$i] . ' must be a valid JPEG or PNG image.'
-                ]);
-            }
-
-            $imageId = Uuid::v4();
-            $filename = $imageId . '.' . $ext;
-            $destination = $uploadDir . '/' . $filename;
-
-            if (!move_uploaded_file($tmpNames[$i], $destination)) {
-                $this->cleanupPhysicalFiles($uploadedImages);
-                throw new HttpException('Failed to save uploaded file ' . $names[$i], 500);
-            }
-
-            $relativeDir = 'uploads/' . $filename;
-            $uploadedImages[] = [
-                'id' => $imageId,
-                'path' => $relativeDir,
-                'size' => $sizes[$i],
-                'mime' => $mimeType
-            ];
+        if (!move_uploaded_file($file['tmp_name'], $destination)) {
+            throw new HttpException('Failed to save uploaded file.', 500);
         }
 
-        // Save records to database
+        $relativeDir = 'uploads/' . $filename;
+
+        // Save record to database
         try {
-            foreach ($uploadedImages as $img) {
-                ImageRepository::insert($img['id'], $img['path'], $img['size'], $img['mime'], $userId);
-            }
+            ImageRepository::insert($imageId, $relativeDir, $file['size'], $mimeType, $userId);
         } catch (\Throwable $e) {
-            $this->cleanupPhysicalFiles($uploadedImages);
+            if (is_file($destination)) {
+                @unlink($destination);
+            }
             throw $e;
         }
 
-        // Build list of secure URLs to return to the caller
+        // Build secure URL to return to the caller
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost:8000';
         $baseUrl = $protocol . '://' . $host;
 
-        $responseImages = [];
-        foreach ($uploadedImages as $img) {
-            $responseImages[] = [
-                'id' => $img['id'],
-                'url' => $baseUrl . '/v1/images?id=' . $img['id']
-            ];
-        }
-
         Response::json([
-            'message' => 'Images uploaded successfully.',
-            'images' => $responseImages
+            'message' => 'Image uploaded successfully.',
+            'id' => $imageId,
+            'url' => $baseUrl . '/v1/images?id=' . $imageId
         ], 201);
     }
 

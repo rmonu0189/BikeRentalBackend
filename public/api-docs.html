@@ -2079,7 +2079,7 @@
             <div class="meta-badge">Authentication: <strong>Bearer JWT Token</strong></div>
             <div class="meta-badge">Content-Type: <strong>multipart/form-data</strong></div>
           </div>
-          <p>Uploads 1 to 5 images. The physical files are stored in the non-web-accessible <code class="inline">storage/uploads/</code> directory. Returns UUID registry identifiers and secure access URLs.</p>
+          <p>Uploads a single image. The physical file is stored in the non-web-accessible <code class="inline">storage/uploads/</code> directory. Returns UUID registry identifier and secure access URL.</p>
           
           <h4>Request Body Parameters</h4>
           <div class="params-table-wrapper">
@@ -2094,10 +2094,10 @@
               </thead>
               <tbody>
                 <tr>
-                  <td class="param-name">images[]</td>
-                  <td class="param-type">file array</td>
+                  <td class="param-name">image</td>
+                  <td class="param-type">file</td>
                   <td class="param-req">Yes</td>
-                  <td>Image files to upload (min 1, max 5, JPEG/PNG format, max 5MB each).</td>
+                  <td>Image file to upload (JPEG/PNG format, max 5MB).</td>
                 </tr>
               </tbody>
             </table>
@@ -2108,8 +2108,7 @@
             <div class="curl-block">
               <pre class="curl-snippet">curl -X POST http://localhost:8000/v1/images/upload \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  -F "images[]=@file1.png" \
-  -F "images[]=@file2.jpg"</pre>
+  -F "image=@file1.png"</pre>
               <button type="button" class="copy-curl-btn">Copy</button>
             </div>
           </div>
@@ -2123,13 +2122,9 @@
             </div>
             <div class="tab-content active" data-tab-val="201">
               <pre>{
-  "message": "Images uploaded successfully.",
-  "images": [
-    {
-      "id": "3f8b7c6d-5e4a-2f1b-0c9d-8e7f6a5b4c3d",
-      "url": "http://localhost:8000/v1/images?id=3f8b7c6d-5e4a-2f1b-0c9d-8e7f6a5b4c3d"
-    }
-  ]
+  "message": "Image uploaded successfully.",
+  "id": "3f8b7c6d-5e4a-2f1b-0c9d-8e7f6a5b4c3d",
+  "url": "http://localhost:8000/v1/images?id=3f8b7c6d-5e4a-2f1b-0c9d-8e7f6a5b4c3d"
 }</pre>
             </div>
             <div class="tab-content" data-tab-val="401">
@@ -2141,7 +2136,7 @@
               <pre>{
   "error": "Validation failed.",
   "errors": {
-    "images": "You must upload between 1 and 5 files."
+    "image": "You must upload an image."
   }
 }</pre>
             </div>
@@ -2151,8 +2146,8 @@
             <summary>Try this request</summary>
             <div class="api-tester-box">
               <div>
-                <label class="try-lbl">Select Images (JPEG/PNG, Max 5MB each)</label>
-                <input type="file" class="api-tester-images-upload" name="images[]" multiple style="display:block; margin: 0.5rem 0; color: #fff;" accept=".jpg,.jpeg,.png" />
+                <label class="try-lbl">Select Image (JPEG/PNG, Max 5MB)</label>
+                <input type="file" class="api-tester-image-upload" name="image" style="display:block; margin: 0.5rem 0; color: #fff;" accept=".jpg,.jpeg,.png" />
               </div>
               <button type="button" class="btn-api-send">Send request</button>
               <div class="api-tester-out" style="display:none;">
@@ -3155,16 +3150,14 @@
             parts.push("-F 'address_proof=@address_proof.png'", "-F 'identity_proof=@identity_proof.png'", "-F 'address_details=\"123 Street\"'");
           } else if (path === "/v1/images/upload") {
             if (detailsEl) {
-              var imagesEl = detailsEl.querySelector(".api-tester-images-upload");
-              if (imagesEl && imagesEl.files && imagesEl.files.length > 0) {
-                for (var i = 0; i < imagesEl.files.length; i++) {
-                  parts.push("-F 'images[]=@" + (imagesEl.files[i].name || "image.png") + "'");
-                }
+              var imageEl = detailsEl.querySelector(".api-tester-image-upload");
+              if (imageEl && imageEl.files && imageEl.files[0]) {
+                parts.push("-F 'image=@" + (imageEl.files[0].name || "image.png") + "'");
               } else {
-                parts.push("-F 'images[]=@image1.png'");
+                parts.push("-F 'image=@image.png'");
               }
             } else {
-              parts.push("-F 'images[]=@image1.png'");
+              parts.push("-F 'image=@image.png'");
             }
           }
         } else if (body != null && body !== "") {
@@ -3233,11 +3226,9 @@
               fd.append("address_details", addrDetailsEl.value.trim());
             }
           } else if (path === "/v1/images/upload") {
-            var imagesEl = box.querySelector(".api-tester-images-upload");
-            if (imagesEl && imagesEl.files && imagesEl.files.length > 0) {
-              for (var i = 0; i < imagesEl.files.length; i++) {
-                fd.append("images[]", imagesEl.files[i]);
-              }
+            var imageEl = box.querySelector(".api-tester-image-upload");
+            if (imageEl && imageEl.files && imageEl.files[0]) {
+              fd.append("image", imageEl.files[0]);
             }
           }
           fetchOpts.body = fd;
