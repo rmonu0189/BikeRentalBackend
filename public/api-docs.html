@@ -482,18 +482,54 @@
       border-radius: 0 6px 6px 0;
     }
     
-    /* Example cURL Request styling */
-    .curl-snippet-container {
+    /* Collapsible cURL Details card */
+    details.curl-details {
       margin: 1.5rem 0;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      background: rgba(30, 41, 59, 0.2);
+      overflow: hidden;
+      transition: all 0.2s ease-in-out;
     }
-    .curl-header {
+    
+    details.curl-details summary {
+      cursor: pointer;
       font-size: 0.75rem;
       font-family: var(--font-heading);
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       color: var(--muted);
-      margin: 0 0 0.5rem;
+      padding: 0.75rem 1.25rem;
+      list-style: none;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(9, 13, 22, 0.5);
+    }
+    
+    details.curl-details summary::-webkit-details-marker { display: none; }
+    details.curl-details summary::before {
+      content: "▸";
+      display: inline-block;
+      transition: transform 0.12s ease;
+      font-size: 1rem;
+      color: var(--muted);
+    }
+    
+    details.curl-details[open] summary::before {
+      transform: rotate(90deg);
+    }
+
+    details.curl-details[open] summary {
+      border-bottom: 1px solid var(--card-border);
+      color: var(--accent-hover);
+    }
+
+    details.curl-details .curl-block {
+      border: none;
+      border-radius: 0;
     }
     .curl-block {
       position: relative;
@@ -1108,7 +1144,8 @@
               <button type="button" class="copy-curl-btn">Copy</button>
             </div>
           </div>
-\n<h4>Responses &amp; Status Codes</h4>
+
+<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -1222,7 +1259,8 @@
               <button type="button" class="copy-curl-btn">Copy</button>
             </div>
           </div>
-\n<h4>Responses &amp; Status Codes</h4>
+
+<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -1335,7 +1373,8 @@
               <button type="button" class="copy-curl-btn">Copy</button>
             </div>
           </div>
-\n<h4>Responses &amp; Status Codes</h4>
+
+<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -1422,7 +1461,8 @@
               <button type="button" class="copy-curl-btn">Copy</button>
             </div>
           </div>
-\n<h4>Responses &amp; Status Codes</h4>
+
+<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -1467,7 +1507,8 @@
               <button type="button" class="copy-curl-btn">Copy</button>
             </div>
           </div>
-\n<h4>Responses &amp; Status Codes</h4>
+
+<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -1554,7 +1595,8 @@
               <button type="button" class="copy-curl-btn">Copy</button>
             </div>
           </div>
-\n<h4>Responses &amp; Status Codes</h4>
+
+<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -1657,7 +1699,8 @@
               <button type="button" class="copy-curl-btn">Copy</button>
             </div>
           </div>
-\n<h4>Responses &amp; Status Codes</h4>
+
+<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -1740,7 +1783,8 @@
               <button type="button" class="copy-curl-btn">Copy</button>
             </div>
           </div>
-\n<h4>Responses &amp; Status Codes</h4>
+
+<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '201')">201 Created <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -1810,7 +1854,8 @@
               <button type="button" class="copy-curl-btn">Copy</button>
             </div>
           </div>
-\n<h4>Responses &amp; Status Codes</h4>
+
+<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -1862,7 +1907,8 @@
               <button type="button" class="copy-curl-btn">Copy</button>
             </div>
           </div>
-\n<h4>Responses &amp; Status Codes</h4>
+
+<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -1962,7 +2008,8 @@
               <button type="button" class="copy-curl-btn">Copy</button>
             </div>
           </div>
-\n<h4>Responses &amp; Status Codes</h4>
+
+<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -2050,7 +2097,8 @@
               <button type="button" class="copy-curl-btn">Copy</button>
             </div>
           </div>
-\n<h4>Responses &amp; Status Codes</h4>
+
+<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK (List) <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -2205,7 +2253,8 @@
               <button type="button" class="copy-curl-btn">Copy</button>
             </div>
           </div>
-\n<h4>Responses &amp; Status Codes</h4>
+
+<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '201')">201 Created <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -2349,7 +2398,8 @@
               <button type="button" class="copy-curl-btn">Copy</button>
             </div>
           </div>
-\n<h4>Responses &amp; Status Codes</h4>
+
+<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -2437,7 +2487,8 @@
               <button type="button" class="copy-curl-btn">Copy</button>
             </div>
           </div>
-\n<h4>Responses &amp; Status Codes</h4>
+
+<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -2493,7 +2544,8 @@
               <button type="button" class="copy-curl-btn">Copy</button>
             </div>
           </div>
-\n<h4>Responses &amp; Status Codes</h4>
+
+<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -2593,7 +2645,8 @@
               <button type="button" class="copy-curl-btn">Copy</button>
             </div>
           </div>
-\n<h4>Responses &amp; Status Codes</h4>
+
+<h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -3180,6 +3233,25 @@
           det.appendChild(container);
           
           heading.parentNode.removeChild(heading);
+        }
+      });
+
+      // Dynamically wrap cURL snippets in collapsible details cards
+      document.querySelectorAll(".curl-snippet-container").forEach(function (container) {
+        var header = container.querySelector(".curl-header");
+        var block = container.querySelector(".curl-block");
+        if (header && block) {
+          var det = document.createElement("details");
+          det.className = "curl-details";
+          
+          var sum = document.createElement("summary");
+          sum.textContent = header.textContent;
+          det.appendChild(sum);
+          
+          container.parentNode.insertBefore(det, container);
+          det.appendChild(block);
+          
+          container.parentNode.removeChild(container);
         }
       });
     })();
