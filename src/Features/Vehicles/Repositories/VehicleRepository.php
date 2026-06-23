@@ -21,13 +21,14 @@ final class VehicleRepository
         string $licensePlate,
         float $pricePerDay,
         float $pricePerHour,
-        string $status
+        string $status,
+        array $images
     ): void {
         $stmt = Database::connection()->prepare(
             'INSERT INTO vehicles (
-                id, owner_id, make, model, year, license_plate, price_per_day, price_per_hour, status, created_at, updated_at
+                id, owner_id, make, model, year, license_plate, price_per_day, price_per_hour, status, images, created_at, updated_at
              ) VALUES (
-                :id, :owner_id, :make, :model, :year, :license_plate, :price_per_day, :price_per_hour, :status, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                :id, :owner_id, :make, :model, :year, :license_plate, :price_per_day, :price_per_hour, :status, :images, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
              )'
         );
         $stmt->execute([
@@ -40,6 +41,7 @@ final class VehicleRepository
             'price_per_day' => $pricePerDay,
             'price_per_hour' => $pricePerHour,
             'status' => $status,
+            'images' => json_encode($images),
         ]);
     }
 
@@ -54,7 +56,8 @@ final class VehicleRepository
         string $licensePlate,
         float $pricePerDay,
         float $pricePerHour,
-        string $status
+        string $status,
+        array $images
     ): void {
         $stmt = Database::connection()->prepare(
             'UPDATE vehicles
@@ -65,6 +68,7 @@ final class VehicleRepository
                  price_per_day = :price_per_day,
                  price_per_hour = :price_per_hour,
                  status = :status,
+                 images = :images,
                  updated_at = CURRENT_TIMESTAMP
              WHERE id = :id'
         );
@@ -77,6 +81,7 @@ final class VehicleRepository
             'price_per_day' => $pricePerDay,
             'price_per_hour' => $pricePerHour,
             'status' => $status,
+            'images' => json_encode($images),
         ]);
     }
 
@@ -97,7 +102,7 @@ final class VehicleRepository
     public static function findById(string $id): ?array
     {
         $stmt = Database::connection()->prepare(
-            'SELECT id, owner_id, make, model, year, license_plate, price_per_day, price_per_hour, status, rejection_reason, reviewed_by, reviewed_at, created_at, updated_at
+            'SELECT id, owner_id, make, model, year, license_plate, price_per_day, price_per_hour, status, rejection_reason, reviewed_by, reviewed_at, images, created_at, updated_at
              FROM vehicles
              WHERE id = :id
              LIMIT 1'
@@ -122,6 +127,7 @@ final class VehicleRepository
             'rejection_reason' => $row['rejection_reason'] !== null ? (string) $row['rejection_reason'] : null,
             'reviewed_by' => $row['reviewed_by'] !== null ? (string) $row['reviewed_by'] : null,
             'reviewed_at' => $row['reviewed_at'] !== null ? (string) $row['reviewed_at'] : null,
+            'images' => json_decode($row['images'] ?? '[]', true) ?: [],
             'created_at' => (string) $row['created_at'],
             'updated_at' => (string) $row['updated_at'],
         ];
@@ -133,14 +139,18 @@ final class VehicleRepository
     public static function findPending(): array
     {
         $stmt = Database::connection()->prepare(
-            'SELECT v.id, v.owner_id, v.make, v.model, v.year, v.license_plate, v.price_per_day, v.price_per_hour, v.status, v.created_at, u.full_name as owner_name, u.phone as owner_phone
+            'SELECT v.id, v.owner_id, v.make, v.model, v.year, v.license_plate, v.price_per_day, v.price_per_hour, v.status, v.images, v.created_at, u.full_name as owner_name, u.phone as owner_phone
              FROM vehicles v
              JOIN users u ON v.owner_id = u.id
              WHERE v.status = \'pending\'
              ORDER BY v.created_at ASC'
         );
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        foreach ($rows as &$row) {
+            $row['images'] = json_decode($row['images'] ?? '[]', true) ?: [];
+        }
+        return $rows;
     }
 
     /**
@@ -149,13 +159,17 @@ final class VehicleRepository
     public static function findAllApproved(): array
     {
         $stmt = Database::connection()->prepare(
-            'SELECT id, owner_id, make, model, year, license_plate, price_per_day, price_per_hour, status, created_at
+            'SELECT id, owner_id, make, model, year, license_plate, price_per_day, price_per_hour, status, images, created_at
              FROM vehicles
              WHERE status = \'approved\'
              ORDER BY created_at DESC'
         );
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        foreach ($rows as &$row) {
+            $row['images'] = json_decode($row['images'] ?? '[]', true) ?: [];
+        }
+        return $rows;
     }
 
     /**
@@ -164,13 +178,17 @@ final class VehicleRepository
     public static function findByOwner(string $ownerId): array
     {
         $stmt = Database::connection()->prepare(
-            'SELECT id, owner_id, make, model, year, license_plate, price_per_day, price_per_hour, status, rejection_reason, created_at
+            'SELECT id, owner_id, make, model, year, license_plate, price_per_day, price_per_hour, status, rejection_reason, images, created_at
              FROM vehicles
              WHERE owner_id = :owner_id
              ORDER BY created_at DESC'
         );
         $stmt->execute(['owner_id' => $ownerId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        foreach ($rows as &$row) {
+            $row['images'] = json_decode($row['images'] ?? '[]', true) ?: [];
+        }
+        return $rows;
     }
 
     /**
@@ -179,13 +197,17 @@ final class VehicleRepository
     public static function findAll(): array
     {
         $stmt = Database::connection()->prepare(
-            'SELECT v.id, v.owner_id, v.make, v.model, v.year, v.license_plate, v.price_per_day, v.price_per_hour, v.status, v.created_at, u.full_name as owner_name
+            'SELECT v.id, v.owner_id, v.make, v.model, v.year, v.license_plate, v.price_per_day, v.price_per_hour, v.status, v.images, v.created_at, u.full_name as owner_name
              FROM vehicles v
              LEFT JOIN users u ON v.owner_id = u.id
              ORDER BY v.created_at DESC'
         );
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        foreach ($rows as &$row) {
+            $row['images'] = json_decode($row['images'] ?? '[]', true) ?: [];
+        }
+        return $rows;
     }
 
     /**

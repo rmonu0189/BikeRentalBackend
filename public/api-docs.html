@@ -746,13 +746,13 @@
       transition: all 0.2s;
     }
     
-    .api-tester-json:focus, .api-tester-query:focus {
+    .api-tester-json:focus, .api-tester-query:focus, .api-tester-input:focus {
       outline: none;
       border-color: #818cf8;
       box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.15);
     }
     
-    .api-tester-query {
+    .api-tester-query, .api-tester-input {
       width: 100%;
       font-family: var(--font-mono);
       font-size: 0.8rem;
@@ -1010,6 +1010,18 @@
               <a href="#get-kyc-status" data-section="get-kyc-status"><span class="method-tag method-tag-get">GET</span> /kyc/status</a>
               <a href="#get-admin-kyc-pending" data-section="get-admin-kyc-pending"><span class="method-tag method-tag-get">GET</span> /admin/kyc/pending</a>
               <a href="#post-admin-kyc-review" data-section="post-admin-kyc-review"><span class="method-tag method-tag-post">POST</span> /admin/kyc/review</a>
+            </div>
+          </div>
+
+          <!-- Images & Media -->
+          <div class="sidebar-category">
+            <button class="category-toggle" onclick="toggleSidebarCategory(this)">
+              <span>Images &amp; Media API</span>
+              <span class="chevron">▸</span>
+            </button>
+            <div class="category-links">
+              <a href="#post-images-upload" data-section="post-images-upload"><span class="method-tag method-tag-post">POST</span> /images/upload</a>
+              <a href="#get-images" data-section="get-images"><span class="method-tag method-tag-get">GET</span> /images</a>
             </div>
           </div>
 
@@ -2059,6 +2071,181 @@
           </details>
         </section>
 
+        <!-- SECTION: IMAGES & MEDIA -->
+        <!-- ENDPOINT: POST /images/upload -->
+        <section class="doc-section" id="post-images-upload" data-section="post-images-upload">
+          <h3><span class="method method-post">POST</span> <code class="path">/v1/images/upload</code></h3>
+          <div class="endpoint-meta">
+            <div class="meta-badge">Authentication: <strong>Bearer JWT Token</strong></div>
+            <div class="meta-badge">Content-Type: <strong>multipart/form-data</strong></div>
+          </div>
+          <p>Uploads 1 to 5 images. The physical files are stored in the non-web-accessible <code class="inline">storage/uploads/</code> directory. Returns UUID registry identifiers and secure access URLs.</p>
+          
+          <h4>Request Body Parameters</h4>
+          <div class="params-table-wrapper">
+            <table class="params-table">
+              <thead>
+                <tr>
+                  <th>Field</th>
+                  <th>Type</th>
+                  <th>Required</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="param-name">images[]</td>
+                  <td class="param-type">file array</td>
+                  <td class="param-req">Yes</td>
+                  <td>Image files to upload (min 1, max 5, JPEG/PNG format, max 5MB each).</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="curl-snippet-container">
+            <h5 class="curl-header">Example cURL Request</h5>
+            <div class="curl-block">
+              <pre class="curl-snippet">curl -X POST http://localhost:8000/v1/images/upload \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -F "images[]=@file1.png" \
+  -F "images[]=@file2.jpg"</pre>
+              <button type="button" class="copy-curl-btn">Copy</button>
+            </div>
+          </div>
+
+          <h4>Responses &amp; Status Codes</h4>
+          <div class="tabs-container">
+            <div class="tabs-header">
+              <button class="tab-btn active" onclick="switchResponseTab(this, '201')">201 Created <span class="tab-badge tab-badge-2xx">Success</span></button>
+              <button class="tab-btn" onclick="switchResponseTab(this, '401')">401 Unauthorized <span class="tab-badge tab-badge-4xx">Auth</span></button>
+              <button class="tab-btn" onclick="switchResponseTab(this, '422')">422 Unprocessable <span class="tab-badge tab-badge-4xx">Validation</span></button>
+            </div>
+            <div class="tab-content active" data-tab-val="201">
+              <pre>{
+  "message": "Images uploaded successfully.",
+  "images": [
+    {
+      "id": "3f8b7c6d-5e4a-2f1b-0c9d-8e7f6a5b4c3d",
+      "url": "http://localhost:8000/v1/images?id=3f8b7c6d-5e4a-2f1b-0c9d-8e7f6a5b4c3d"
+    }
+  ]
+}</pre>
+            </div>
+            <div class="tab-content" data-tab-val="401">
+              <pre>{
+  "error": "Unauthorized"
+}</pre>
+            </div>
+            <div class="tab-content" data-tab-val="422">
+              <pre>{
+  "error": "Validation failed.",
+  "errors": {
+    "images": "You must upload between 1 and 5 files."
+  }
+}</pre>
+            </div>
+          </div>
+          
+          <details class="api-tester" data-try-method="POST" data-try-path="/v1/images/upload" data-try-auth="bearer" data-try-no-json="1">
+            <summary>Try this request</summary>
+            <div class="api-tester-box">
+              <div>
+                <label class="try-lbl">Select Images (JPEG/PNG, Max 5MB each)</label>
+                <input type="file" class="api-tester-images-upload" name="images[]" multiple style="display:block; margin: 0.5rem 0; color: #fff;" accept=".jpg,.jpeg,.png" />
+              </div>
+              <button type="button" class="btn-api-send">Send request</button>
+              <div class="api-tester-out" style="display:none;">
+                <div class="api-tester-meta"></div>
+                <pre class="api-tester-res"></pre>
+              </div>
+            </div>
+          </details>
+        </section>
+
+        <!-- ENDPOINT: GET /images -->
+        <section class="doc-section" id="get-images" data-section="get-images">
+          <h3><span class="method method-get">GET</span> <code class="path">/v1/images</code></h3>
+          <div class="endpoint-meta">
+            <div class="meta-badge">Authentication: <strong>Bearer JWT Token</strong></div>
+          </div>
+          <p>Retrieves and streams the requested image securely. Access is only allowed if the user is an administrator, the uploader of the image, or if the image belongs to an approved vehicle.</p>
+          
+          <h4>Query Parameters</h4>
+          <div class="params-table-wrapper">
+            <table class="params-table">
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Type</th>
+                  <th>Required</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="param-name">id</td>
+                  <td class="param-type">string (UUID)</td>
+                  <td class="param-req">Yes</td>
+                  <td>The ID of the image to retrieve.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="curl-snippet-container">
+            <h5 class="curl-header">Example cURL Request</h5>
+            <div class="curl-block">
+              <pre class="curl-snippet">curl -X GET "http://localhost:8000/v1/images?id=IMAGE_UUID" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"</pre>
+              <button type="button" class="copy-curl-btn">Copy</button>
+            </div>
+          </div>
+
+          <h4>Responses &amp; Status Codes</h4>
+          <div class="tabs-container">
+            <div class="tabs-header">
+              <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
+              <button class="tab-btn" onclick="switchResponseTab(this, '401')">401 Unauthorized <span class="tab-badge tab-badge-4xx">Auth</span></button>
+              <button class="tab-btn" onclick="switchResponseTab(this, '403')">403 Forbidden <span class="tab-badge tab-badge-5xx">Permission</span></button>
+              <button class="tab-btn" onclick="switchResponseTab(this, '404')">404 Not Found <span class="tab-badge tab-badge-4xx">Not Found</span></button>
+            </div>
+            <div class="tab-content active" data-tab-val="200">
+              <p class="note">Streams binary image file directly with matching content type headers (<code class="inline">image/jpeg</code> or <code class="inline">image/png</code>).</p>
+            </div>
+            <div class="tab-content" data-tab-val="401">
+              <pre>{
+  "error": "Unauthorized"
+}</pre>
+            </div>
+            <div class="tab-content" data-tab-val="403">
+              <pre>{
+  "error": "Forbidden. You do not have permission to access this image."
+}</pre>
+            </div>
+            <div class="tab-content" data-tab-val="404">
+              <pre>{
+  "error": "Image not found."
+}</pre>
+            </div>
+          </div>
+          
+          <details class="api-tester" data-try-method="GET" data-try-path="/v1/images" data-try-auth="bearer" data-try-no-json="1">
+            <summary>Try this request</summary>
+            <div class="api-tester-box">
+              <div>
+                <label class="try-lbl">Query Parameters (e.g. ?id=UUID)</label>
+                <input type="text" class="api-tester-query" placeholder="id=some-image-uuid" />
+              </div>
+              <button type="button" class="btn-api-send">Send request</button>
+              <div class="api-tester-out" style="display:none;">
+                <div class="api-tester-meta"></div>
+                <pre class="api-tester-res"></pre>
+              </div>
+            </div>
+          </details>
+        </section>
+
         <!-- ENDPOINT: GET /vehicles -->
         <section class="doc-section" id="get-vehicles" data-section="get-vehicles">
           <h3><span class="method method-get">GET</span> <code class="path">/v1/vehicles</code></h3>
@@ -2232,12 +2419,18 @@
                   <td class="param-opt">No</td>
                   <td>Admins only. Specify owner user (defaults to sender).</td>
                 </tr>
+                <tr>
+                  <td class="param-name">images</td>
+                  <td class="param-type">array of strings</td>
+                  <td class="param-req">Yes</td>
+                  <td>Array of secure image URLs (min 1, max 5) returned from the image upload endpoint.</td>
+                </tr>
               </tbody>
             </table>
           </div>
 
-                    <div class="curl-snippet-container">
-            <h5 class="curl-header">Example cURL Request</h5>
+          <div class="curl-snippet-container">
+            <h5 class="curl-header">Example cURL Request (Create Vehicle)</h5>
             <div class="curl-block">
               <pre class="curl-snippet">curl -X POST http://localhost:8000/v1/vehicles \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
@@ -2248,13 +2441,16 @@
     "year": 2023,
     "license_plate": "MH-12-AB-1234",
     "price_per_day": 500.00,
-    "price_per_hour": 50.00
+    "price_per_hour": 50.00,
+    "images": [
+      "http://localhost:8000/v1/images?id=3f8b7c6d-5e4a-2f1b-0c9d-8e7f6a5b4c3d"
+    ]
   }'</pre>
               <button type="button" class="copy-curl-btn">Copy</button>
             </div>
           </div>
 
-<h4>Responses &amp; Status Codes</h4>
+          <h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '201')">201 Created <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -2278,7 +2474,8 @@
   "error": "Validation failed.",
   "errors": {
     "year": "Valid year is required (between 1900 and 2100).",
-    "price_per_day": "Price per day must be a non-negative number."
+    "price_per_day": "Price per day must be a non-negative number.",
+    "images": "Renter must provide at least 1 vehicle image URL."
   }
 }</pre>
             </div>
@@ -2289,13 +2486,16 @@
             <div class="api-tester-box">
               <div class="api-tester-json-wrap">
                 <label class="try-lbl">JSON Body</label>
-                <textarea class="api-tester-json" rows="8">{
+                <textarea class="api-tester-json" rows="10">{
   "make": "Honda",
   "model": "Activa 6G",
   "year": 2023,
   "license_plate": "MH-12-AB-1234",
   "price_per_day": 500.00,
-  "price_per_hour": 50.00
+  "price_per_hour": 50.00,
+  "images": [
+    "http://localhost:8000/v1/images?id=YOUR_IMAGE_ID"
+  ]
 }</textarea>
               </div>
               <button type="button" class="btn-api-send">Send request</button>
@@ -2314,7 +2514,7 @@
             <div class="meta-badge">Authentication: <strong>Bearer JWT (Owner/Admin Only)</strong></div>
             <div class="meta-badge">Content-Type: <strong>application/json</strong></div>
           </div>
-          <p>Updates an existing vehicle. Renter updates reset the vehicle's verification status back to `pending`. Admins can specify updates and preserve or override status.</p>
+          <p>Updates an existing vehicle using JSON. Renter updates reset the vehicle's verification status back to `pending`. Admins can specify updates and preserve or override status. Any disassociated image URLs will have their registry records and physical files cleaned up automatically.</p>
           
           <h4>Request Body Parameters</h4>
           <div class="params-table-wrapper">
@@ -2376,11 +2576,17 @@
                   <td class="param-opt">No</td>
                   <td>Admins only. Set status (`pending`, `approved`, `rejected`).</td>
                 </tr>
+                <tr>
+                  <td class="param-name">images</td>
+                  <td class="param-type">array of strings</td>
+                  <td class="param-opt">No</td>
+                  <td>Array of secure image URLs (min 1, max 5) returned from the image upload endpoint. Replaces the current image list.</td>
+                </tr>
               </tbody>
             </table>
           </div>
 
-                    <div class="curl-snippet-container">
+          <div class="curl-snippet-container">
             <h5 class="curl-header">Example cURL Request</h5>
             <div class="curl-block">
               <pre class="curl-snippet">curl -X PUT http://localhost:8000/v1/vehicles \
@@ -2393,13 +2599,16 @@
     "year": 2024,
     "license_plate": "MH-12-AB-1234",
     "price_per_day": 550.00,
-    "price_per_hour": 55.00
+    "price_per_hour": 55.00,
+    "images": [
+      "http://localhost:8000/v1/images?id=3f8b7c6d-5e4a-2f1b-0c9d-8e7f6a5b4c3d"
+    ]
   }'</pre>
               <button type="button" class="copy-curl-btn">Copy</button>
             </div>
           </div>
 
-<h4>Responses &amp; Status Codes</h4>
+          <h4>Responses &amp; Status Codes</h4>
           <div class="tabs-container">
             <div class="tabs-header">
               <button class="tab-btn active" onclick="switchResponseTab(this, '200')">200 OK <span class="tab-badge tab-badge-2xx">Success</span></button>
@@ -2430,14 +2639,17 @@
             <div class="api-tester-box">
               <div class="api-tester-json-wrap">
                 <label class="try-lbl">JSON Body</label>
-                <textarea class="api-tester-json" rows="8">{
+                <textarea class="api-tester-json" rows="11">{
   "id": "",
   "make": "Honda",
   "model": "Activa 6G",
   "year": 2024,
   "license_plate": "MH-12-AB-1234",
   "price_per_day": 550.00,
-  "price_per_hour": 55.00
+  "price_per_hour": 55.00,
+  "images": [
+    "http://localhost:8000/v1/images?id=YOUR_IMAGE_ID"
+  ]
 }</textarea>
               </div>
               <button type="button" class="btn-api-send">Send request</button>
@@ -2734,6 +2946,35 @@
       var SS_EXP = "bike_token_exp";
       var SS_USER = "bike_user_profile";
       
+      // Dynamically add a cURL preview panel to every api-tester's output section if it is missing
+      document.querySelectorAll(".api-tester-out").forEach(function (out) {
+        if (!out.querySelector(".api-tester-curl-wrap")) {
+          var wrap = document.createElement("details");
+          wrap.className = "api-tester-curl-wrap";
+          
+          var sum = document.createElement("summary");
+          sum.textContent = "cURL Snippet";
+          wrap.appendChild(sum);
+          
+          var block = document.createElement("div");
+          block.className = "api-curl-block";
+          block.style.position = "relative";
+          
+          var pre = document.createElement("pre");
+          pre.className = "api-tester-curl";
+          block.appendChild(pre);
+          
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "copy-try-curl";
+          btn.textContent = "Copy";
+          block.appendChild(btn);
+          
+          wrap.appendChild(block);
+          out.appendChild(wrap);
+        }
+      });
+      
       function base() {
         var input = document.getElementById("baseUrl");
         if (input && input.value.trim()) {
@@ -2903,18 +3144,33 @@
         return await refreshAccessToken();
       }
       
-      function buildCurl(method, url, hdrs, body, isMultipart) {
+      function buildCurl(method, url, hdrs, body, isMultipart, path, detailsEl) {
         var parts = ["curl -sS -i", "-X", "'" + method + "'"];
         parts.push("'" + url.replace(/'/g, "'\\''") + "'");
         Object.keys(hdrs).forEach(function (k) {
           parts.push("-H", "'" + k + ": " + String(hdrs[k]).replace(/'/g, "'\\''") + "'");
         });
         if (isMultipart) {
-          parts.push("-F 'address_proof=@address_proof.png'", "-F 'identity_proof=@identity_proof.png'", "-F 'address_details=\"123 Street\"'");
+          if (path === "/v1/kyc/submit") {
+            parts.push("-F 'address_proof=@address_proof.png'", "-F 'identity_proof=@identity_proof.png'", "-F 'address_details=\"123 Street\"'");
+          } else if (path === "/v1/images/upload") {
+            if (detailsEl) {
+              var imagesEl = detailsEl.querySelector(".api-tester-images-upload");
+              if (imagesEl && imagesEl.files && imagesEl.files.length > 0) {
+                for (var i = 0; i < imagesEl.files.length; i++) {
+                  parts.push("-F 'images[]=@" + (imagesEl.files[i].name || "image.png") + "'");
+                }
+              } else {
+                parts.push("-F 'images[]=@image1.png'");
+              }
+            } else {
+              parts.push("-F 'images[]=@image1.png'");
+            }
+          }
         } else if (body != null && body !== "") {
           parts.push("-d", "'" + String(body).replace(/'/g, "'\\''") + "'");
         }
-        return parts.join(" ");
+        return parts.join(" \\\n  ");
       }
       
       async function sendTester(detailsEl, isRetry) {
@@ -2942,7 +3198,7 @@
         
         var headers = {};
         var bodyStr = null;
-        var isMultipart = (path === "/v1/kyc/submit");
+        var isMultipart = (path === "/v1/kyc/submit" || path === "/v1/images/upload");
         
         if (auth === "bearer") {
           await ensureFreshAccess();
@@ -2962,18 +3218,27 @@
  
         if (isMultipart) {
           var fd = new FormData();
-          var addrFileEl = box.querySelector(".api-tester-file-address");
-          var idFileEl = box.querySelector(".api-tester-file-identity");
-          var addrDetailsEl = box.querySelector(".api-tester-text-details");
-          
-          if (addrFileEl && addrFileEl.files[0]) {
-            fd.append("address_proof", addrFileEl.files[0]);
-          }
-          if (idFileEl && idFileEl.files[0]) {
-            fd.append("identity_proof", idFileEl.files[0]);
-          }
-          if (addrDetailsEl && addrDetailsEl.value.trim()) {
-            fd.append("address_details", addrDetailsEl.value.trim());
+          if (path === "/v1/kyc/submit") {
+            var addrFileEl = box.querySelector(".api-tester-file-address");
+            var idFileEl = box.querySelector(".api-tester-file-identity");
+            var addrDetailsEl = box.querySelector(".api-tester-text-details");
+            
+            if (addrFileEl && addrFileEl.files[0]) {
+              fd.append("address_proof", addrFileEl.files[0]);
+            }
+            if (idFileEl && idFileEl.files[0]) {
+              fd.append("identity_proof", idFileEl.files[0]);
+            }
+            if (addrDetailsEl && addrDetailsEl.value.trim()) {
+              fd.append("address_details", addrDetailsEl.value.trim());
+            }
+          } else if (path === "/v1/images/upload") {
+            var imagesEl = box.querySelector(".api-tester-images-upload");
+            if (imagesEl && imagesEl.files && imagesEl.files.length > 0) {
+              for (var i = 0; i < imagesEl.files.length; i++) {
+                fd.append("images[]", imagesEl.files[i]);
+              }
+            }
           }
           fetchOpts.body = fd;
         } else if (!noJson && method !== "GET" && method !== "HEAD") {
@@ -2991,27 +3256,34 @@
           meta.className = "api-tester-meta status-5xx";
           resPre.textContent = String(err);
           out.style.display = "block";
-          if (curlPre) curlPre.textContent = buildCurl(method, url, headers, bodyStr, isMultipart);
+          if (curlPre) curlPre.textContent = buildCurl(method, url, headers, bodyStr, isMultipart, path, detailsEl);
           return;
         }
         
-        var resText = await res.text();
-        if (res.status === 401 && auth === "bearer" && !isRetry) {
-          var ok = await refreshAccessToken();
-          if (ok) return sendTester(detailsEl, true);
-        }
-        
-        meta.textContent = res.status + " " + res.statusText;
-        meta.className =
-          "api-tester-meta " +
-          (res.ok ? "status-2xx" : res.status >= 500 ? "status-5xx" : "status-4xx");
         try {
-          resPre.textContent = JSON.stringify(JSON.parse(resText), null, 2);
-        } catch (e) {
-          resPre.textContent = resText || "(empty body)";
+          var resText = await res.text();
+          if (res.status === 401 && auth === "bearer" && !isRetry) {
+            var ok = await refreshAccessToken();
+            if (ok) return sendTester(detailsEl, true);
+          }
+          
+          meta.textContent = res.status + " " + res.statusText;
+          meta.className =
+            "api-tester-meta " +
+            (res.ok ? "status-2xx" : res.status >= 500 ? "status-5xx" : "status-4xx");
+          try {
+            resPre.textContent = JSON.stringify(JSON.parse(resText), null, 2);
+          } catch (e) {
+            resPre.textContent = resText || "(empty body)";
+          }
+          out.style.display = "block";
+          if (curlPre) curlPre.textContent = buildCurl(method, url, headers, bodyStr, isMultipart, path, detailsEl);
+        } catch (err) {
+          meta.textContent = "Error processing response";
+          meta.className = "api-tester-meta status-5xx";
+          resPre.textContent = String(err);
+          out.style.display = "block";
         }
-        out.style.display = "block";
-        if (curlPre) curlPre.textContent = buildCurl(method, url, headers, bodyStr, isMultipart);
       }
       
       document.querySelectorAll(".api-tester .btn-api-send").forEach(function (btn) {

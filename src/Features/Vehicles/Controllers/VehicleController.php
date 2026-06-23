@@ -16,6 +16,13 @@ use App\Features\Vehicles\Repositories\VehicleRepository;
 
 final class VehicleController
 {
+    private const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png'];
+    private const ALLOWED_MIME_TYPES = [
+        'image/jpeg',
+        'image/png',
+    ];
+    private const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB per file
+
     private function isAdmin(array $claims): bool
     {
         $role = (string) ($claims['role'] ?? '');
@@ -89,6 +96,7 @@ final class VehicleController
 
     /**
      * Add a new vehicle. Only Renters and Admins can add vehicles.
+     * Supports both creations and updates when "id" is supplied via POST form parameters.
      */
     public function add(Request $request): void
     {
@@ -105,14 +113,13 @@ final class VehicleController
         }
 
         $data = $request->json();
-
-        // Validate required fields
         $make = isset($data['make']) ? trim((string) $data['make']) : '';
         $model = isset($data['model']) ? trim((string) $data['model']) : '';
         $yearInput = isset($data['year']) ? $data['year'] : null;
         $licensePlate = isset($data['license_plate']) ? trim((string) $data['license_plate']) : '';
         $pricePerDayInput = isset($data['price_per_day']) ? $data['price_per_day'] : null;
         $pricePerHourInput = isset($data['price_per_hour']) ? $data['price_per_hour'] : null;
+        $imagesInput = isset($data['images']) ? $data['images'] : null;
 
         $errors = [];
         if ($make === '') {
@@ -134,17 +141,49 @@ final class VehicleController
             $errors['price_per_hour'] = 'Price per hour must be a non-negative number.';
         }
 
+        // Validate images list
+        if (!is_array($imagesInput) || empty($imagesInput)) {
+            $errors['images'] = 'Renter must provide at least 1 vehicle image URL.';
+        } elseif (count($imagesInput) > 5) {
+            $errors['images'] = 'You can associate at most 5 vehicle images.';
+        } else {
+            // Validate each image URL
+            foreach ($imagesInput as $url) {
+                if (!is_string($url) || trim($url) === '') {
+                    $errors['images'] = 'Invalid image URL format.';
+                    break;
+                }
+                $imageId = $this->extractImageIdFromUrl($url);
+                if ($imageId === null) {
+                    $errors['images'] = 'Image URL must contain a valid id parameter.';
+                    break;
+                }
+                $imgRecord = \App\Features\Images\Repositories\ImageRepository::findById($imageId);
+                if ($imgRecord === null) {
+                    $errors['images'] = 'Uploaded image with ID ' . $imageId . ' was not found.';
+                    break;
+                }
+                // Standard users can only link images they uploaded themselves
+                if (!$isAdmin && $imgRecord['uploaded_by'] !== (string) $claims['sub']) {
+                    $errors['images'] = 'You do not have permission to link image ' . $imageId;
+                    break;
+                }
+            }
+        }
+
         if (!empty($errors)) {
             throw new ValidationException('Validation failed.', $errors);
         }
 
-        // Determine owner ID: Renters add for themselves, admins can specify owner_id or default to themselves.
-        $ownerId = $userId = (string) $claims['sub'];
-        if ($isAdmin && isset($data['owner_id']) && trim((string) $data['owner_id']) !== '') {
-            $ownerId = trim((string) $data['owner_id']);
-            // Verify owner exists and is active
-            if (UserRepository::findById($ownerId) === null) {
-                throw new HttpException('Target owner user not found.', 404);
+        // Determine owner ID
+        $ownerId = (string) $claims['sub'];
+        if ($isAdmin) {
+            $targetOwner = $data['owner_id'] ?? null;
+            if ($targetOwner !== null && trim((string) $targetOwner) !== '') {
+                $ownerId = trim((string) $targetOwner);
+                if (UserRepository::findById($ownerId) === null) {
+                    throw new HttpException('Target owner user not found.', 404);
+                }
             }
         }
 
@@ -163,7 +202,8 @@ final class VehicleController
             $licensePlate,
             (float) $pricePerDayInput,
             (float) $pricePerHourInput,
-            $status
+            $status,
+            $imagesInput
         );
 
         Response::json([
@@ -174,7 +214,7 @@ final class VehicleController
     }
 
     /**
-     * Update an existing vehicle. Owners (renters) can update their own. Admins can update any.
+     * Update an existing vehicle record via PUT (JSON body payload).
      */
     public function update(Request $request): void
     {
@@ -210,6 +250,7 @@ final class VehicleController
         $licensePlate = isset($data['license_plate']) ? trim((string) $data['license_plate']) : $vehicle['license_plate'];
         $pricePerDayInput = isset($data['price_per_day']) ? $data['price_per_day'] : $vehicle['price_per_day'];
         $pricePerHourInput = isset($data['price_per_hour']) ? $data['price_per_hour'] : $vehicle['price_per_hour'];
+        $imagesInput = isset($data['images']) ? $data['images'] : null;
 
         $errors = [];
         if ($make === '') {
@@ -231,13 +272,43 @@ final class VehicleController
             $errors['price_per_hour'] = 'Price per hour must be a non-negative number.';
         }
 
+        // Validate images list if supplied
+        $newImages = $vehicle['images'];
+        if ($imagesInput !== null) {
+            if (!is_array($imagesInput) || empty($imagesInput)) {
+                $errors['images'] = 'Renter must provide at least 1 vehicle image URL.';
+            } elseif (count($imagesInput) > 5) {
+                $errors['images'] = 'You can associate at most 5 vehicle images.';
+            } else {
+                // Validate each image URL
+                foreach ($imagesInput as $url) {
+                    if (!is_string($url) || trim($url) === '') {
+                        $errors['images'] = 'Invalid image URL format.';
+                        break;
+                    }
+                    $imageId = $this->extractImageIdFromUrl($url);
+                    if ($imageId === null) {
+                        $errors['images'] = 'Image URL must contain a valid id parameter.';
+                        break;
+                    }
+                    $imgRecord = \App\Features\Images\Repositories\ImageRepository::findById($imageId);
+                    if ($imgRecord === null) {
+                        $errors['images'] = 'Uploaded image with ID ' . $imageId . ' was not found.';
+                        break;
+                    }
+                    if (!$isAdmin && $imgRecord['uploaded_by'] !== (string) $claims['sub']) {
+                        $errors['images'] = 'You do not have permission to link image ' . $imageId;
+                        break;
+                    }
+                }
+                $newImages = $imagesInput;
+            }
+        }
+
         if (!empty($errors)) {
             throw new ValidationException('Validation failed.', $errors);
         }
 
-        // Determine status
-        // If verification is required, a renter's updates reset the status to pending.
-        // If update is done by admin, status is preserved as is unless explicitly specified.
         $verificationRequired = Env::get('VEHICLE_VERIFICATION_REQUIRED', 'true') === 'true';
         
         if ($isAdmin) {
@@ -249,6 +320,31 @@ final class VehicleController
             $status = $verificationRequired ? 'pending' : 'approved';
         }
 
+        // Identify and clean up replaced/disassociated image files
+        if ($imagesInput !== null) {
+            $oldImageIds = [];
+            foreach ($vehicle['images'] as $url) {
+                $uuid = $this->extractImageIdFromUrl($url);
+                if ($uuid !== null) {
+                    $oldImageIds[] = $uuid;
+                }
+            }
+
+            $newImageIds = [];
+            foreach ($imagesInput as $url) {
+                $uuid = $this->extractImageIdFromUrl($url);
+                if ($uuid !== null) {
+                    $newImageIds[] = $uuid;
+                }
+            }
+
+            // Disassociated IDs = old IDs that are NOT in new IDs
+            $disassociatedIds = array_diff($oldImageIds, $newImageIds);
+            foreach ($disassociatedIds as $imageId) {
+                $this->deleteRegisteredImage($imageId);
+            }
+        }
+
         VehicleRepository::update(
             $id,
             $make,
@@ -257,7 +353,8 @@ final class VehicleController
             $licensePlate,
             (float) $pricePerDayInput,
             (float) $pricePerHourInput,
-            $status
+            $status,
+            $newImages
         );
 
         Response::json([
@@ -268,7 +365,7 @@ final class VehicleController
     }
 
     /**
-     * Delete a vehicle. Owners can delete their own. Admins can delete any.
+     * Delete a vehicle and its uploaded images.
      */
     public function delete(Request $request): void
     {
@@ -292,6 +389,16 @@ final class VehicleController
 
         if (!$isOwner && !$isAdmin) {
             throw new HttpException('Forbidden. You do not have permission to delete this vehicle.', 403);
+        }
+
+        // Delete physical files and registry records
+        if (isset($vehicle['images']) && is_array($vehicle['images'])) {
+            foreach ($vehicle['images'] as $url) {
+                $uuid = $this->extractImageIdFromUrl($url);
+                if ($uuid !== null) {
+                    $this->deleteRegisteredImage($uuid);
+                }
+            }
         }
 
         VehicleRepository::delete($id);
@@ -363,5 +470,28 @@ final class VehicleController
             'vehicle_id' => $vehicleId,
             'status' => $status
         ]);
+    }
+
+    private function extractImageIdFromUrl(string $url): ?string
+    {
+        $parsed = parse_url($url);
+        if (!isset($parsed['query'])) {
+            return null;
+        }
+        parse_str($parsed['query'], $queryParts);
+        return isset($queryParts['id']) && trim($queryParts['id']) !== '' ? trim($queryParts['id']) : null;
+    }
+
+    private function deleteRegisteredImage(string $imageId): void
+    {
+        $img = \App\Features\Images\Repositories\ImageRepository::findById($imageId);
+        if ($img !== null) {
+            $storageDir = __DIR__ . '/../../../../storage';
+            $fullPath = $storageDir . '/' . $img['file_path'];
+            if (is_file($fullPath)) {
+                @unlink($fullPath);
+            }
+            \App\Features\Images\Repositories\ImageRepository::delete($imageId);
+        }
     }
 }

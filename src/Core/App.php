@@ -7,6 +7,7 @@ namespace App\Core;
 use App\Features\Authentication\Controllers\AuthController;
 use App\Features\Kyc\Controllers\KycController;
 use App\Features\Vehicles\Controllers\VehicleController;
+use App\Features\Images\Controllers\ImageController;
 
 final class App
 {
@@ -28,6 +29,7 @@ final class App
         $auth = new AuthController();
         $kyc = new KycController();
         $vehicles = new VehicleController();
+        $images = new ImageController();
 
         // Auth OTP login endpoints
         $router->add('POST', self::API_PREFIX . '/auth/otp/send', static function (Request $r) use ($auth): void {
@@ -100,6 +102,15 @@ final class App
 
         $router->add('POST', self::API_PREFIX . '/admin/vehicles/review', static function (Request $r) use ($vehicles): void {
             $vehicles->review($r);
+        });
+
+        // Images endpoints
+        $router->add('POST', self::API_PREFIX . '/images/upload', static function (Request $r) use ($images): void {
+            $images->upload($r);
+        });
+
+        $router->add('GET', self::API_PREFIX . '/images', static function (Request $r) use ($images): void {
+            $images->getSecure($r);
         });
 
         $router->dispatch($request);
