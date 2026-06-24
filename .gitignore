@@ -35,3 +35,8 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# Uploaded media and seed sources
+storage/uploads/
+storage/seed_sources/
+
