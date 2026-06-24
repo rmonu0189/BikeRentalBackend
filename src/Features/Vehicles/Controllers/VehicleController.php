@@ -59,6 +59,14 @@ final class VehicleController
                 }
             }
 
+            // Generate signed URLs on-the-fly
+            $vehicle['images'] = array_map(function (string $path) use ($vehicle) {
+                if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                    return $path;
+                }
+                return \App\Core\SecureUrl::generate($path, 'vehicle', $vehicle['owner_id']);
+            }, $vehicle['images']);
+
             Response::json($vehicle);
             return;
         }
@@ -90,6 +98,17 @@ final class VehicleController
             // Normal users ('user') only see approved vehicles
             $vehicles = VehicleRepository::findAllApproved();
         }
+
+        // Generate signed URLs on-the-fly
+        foreach ($vehicles as &$v) {
+            $v['images'] = array_map(function (string $path) use ($v) {
+                if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                    return $path;
+                }
+                return \App\Core\SecureUrl::generate($path, 'vehicle', $v['owner_id']);
+            }, $v['images']);
+        }
+        unset($v);
 
         Response::json(['vehicles' => $vehicles]);
     }
@@ -153,7 +172,7 @@ final class VehicleController
                     $errors['images'] = 'Invalid image URL format.';
                     break;
                 }
-                $imageId = $this->extractImageIdFromUrl($url);
+                $imageId = $this->extractImageId($url);
                 if ($imageId === null) {
                     $errors['images'] = 'Image URL must contain a valid id parameter.';
                     break;
@@ -193,6 +212,16 @@ final class VehicleController
 
         $vehicleId = Uuid::v4();
 
+        // Convert the input URLs to relative paths to save in database
+        $imagePaths = [];
+        foreach ($imagesInput as $url) {
+            $imageId = $this->extractImageId($url);
+            $imgRecord = \App\Features\Images\Repositories\ImageRepository::findById($imageId);
+            if ($imgRecord !== null) {
+                $imagePaths[] = $imgRecord['file_path'];
+            }
+        }
+
         VehicleRepository::insert(
             $vehicleId,
             $ownerId,
@@ -203,7 +232,7 @@ final class VehicleController
             (float) $pricePerDayInput,
             (float) $pricePerHourInput,
             $status,
-            $imagesInput
+            $imagePaths
         );
 
         Response::json([
@@ -286,7 +315,7 @@ final class VehicleController
                         $errors['images'] = 'Invalid image URL format.';
                         break;
                     }
-                    $imageId = $this->extractImageIdFromUrl($url);
+                    $imageId = $this->extractImageId($url);
                     if ($imageId === null) {
                         $errors['images'] = 'Image URL must contain a valid id parameter.';
                         break;
@@ -301,7 +330,17 @@ final class VehicleController
                         break;
                     }
                 }
-                $newImages = $imagesInput;
+
+                // Convert URLs to relative paths
+                $imagePaths = [];
+                foreach ($imagesInput as $url) {
+                    $imageId = $this->extractImageId($url);
+                    $imgRecord = \App\Features\Images\Repositories\ImageRepository::findById($imageId);
+                    if ($imgRecord !== null) {
+                        $imagePaths[] = $imgRecord['file_path'];
+                    }
+                }
+                $newImages = $imagePaths;
             }
         }
 
@@ -323,8 +362,8 @@ final class VehicleController
         // Identify and clean up replaced/disassociated image files
         if ($imagesInput !== null) {
             $oldImageIds = [];
-            foreach ($vehicle['images'] as $url) {
-                $uuid = $this->extractImageIdFromUrl($url);
+            foreach ($vehicle['images'] as $path) {
+                $uuid = $this->extractImageId($path);
                 if ($uuid !== null) {
                     $oldImageIds[] = $uuid;
                 }
@@ -332,7 +371,7 @@ final class VehicleController
 
             $newImageIds = [];
             foreach ($imagesInput as $url) {
-                $uuid = $this->extractImageIdFromUrl($url);
+                $uuid = $this->extractImageId($url);
                 if ($uuid !== null) {
                     $newImageIds[] = $uuid;
                 }
@@ -393,8 +432,8 @@ final class VehicleController
 
         // Delete physical files and registry records
         if (isset($vehicle['images']) && is_array($vehicle['images'])) {
-            foreach ($vehicle['images'] as $url) {
-                $uuid = $this->extractImageIdFromUrl($url);
+            foreach ($vehicle['images'] as $path) {
+                $uuid = $this->extractImageId($path);
                 if ($uuid !== null) {
                     $this->deleteRegisteredImage($uuid);
                 }
@@ -419,6 +458,18 @@ final class VehicleController
         }
 
         $vehicles = VehicleRepository::findPending();
+
+        // Generate signed URLs on-the-fly
+        foreach ($vehicles as &$v) {
+            $v['images'] = array_map(function (string $path) use ($v) {
+                if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                    return $path;
+                }
+                return \App\Core\SecureUrl::generate($path, 'vehicle', $v['owner_id']);
+            }, $v['images']);
+        }
+        unset($v);
+
         Response::json([
             'vehicles' => $vehicles
         ]);
@@ -472,14 +523,19 @@ final class VehicleController
         ]);
     }
 
-    private function extractImageIdFromUrl(string $url): ?string
+    private function extractImageId(string $input): ?string
     {
-        $parsed = parse_url($url);
-        if (!isset($parsed['query'])) {
-            return null;
+        if (str_starts_with($input, 'http://') || str_starts_with($input, 'https://')) {
+            $parsed = parse_url($input);
+            if (!isset($parsed['query'])) {
+                return null;
+            }
+            parse_str($parsed['query'], $queryParts);
+            return isset($queryParts['id']) && trim($queryParts['id']) !== '' ? trim($queryParts['id']) : null;
         }
-        parse_str($parsed['query'], $queryParts);
-        return isset($queryParts['id']) && trim($queryParts['id']) !== '' ? trim($queryParts['id']) : null;
+
+        $filename = pathinfo($input, PATHINFO_FILENAME);
+        return Uuid::isValid($filename) ? $filename : null;
     }
 
     private function deleteRegisteredImage(string $imageId): void

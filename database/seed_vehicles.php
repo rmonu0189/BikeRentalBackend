@@ -80,27 +80,41 @@ try {
     $pdo->exec("DELETE FROM images");
     echo "All vehicle and image records cleared from the database.\n";
 
-    // Clean up anything remaining in storage/uploads
+    // Clean up anything remaining in storage/uploads recursively
     $uploadDir = __DIR__ . '/../storage/uploads';
     $absoluteUploadDir = realpath($uploadDir);
     if ($absoluteUploadDir === false) {
         $absoluteUploadDir = $uploadDir;
     }
 
-    if (is_dir($absoluteUploadDir)) {
-        $files = glob($absoluteUploadDir . '/*');
-        if (is_array($files)) {
-            foreach ($files as $file) {
-                if (is_file($file)) {
-                    @unlink($file);
-                }
+    $deleteDirRecursive = static function (string $dir) use (&$deleteDirRecursive): void {
+        if (!is_dir($dir)) {
+            return;
+        }
+        $items = scandir($dir);
+        if ($items === false) {
+            return;
+        }
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+            $path = $dir . '/' . $item;
+            if (is_dir($path)) {
+                $deleteDirRecursive($path);
+                @rmdir($path);
+            } else {
+                @unlink($path);
             }
         }
+    };
+
+    if (is_dir($absoluteUploadDir)) {
+        $deleteDirRecursive($absoluteUploadDir);
     }
-    echo "Storage uploads folder cleared.\n";
+    echo "Storage uploads folder recursively cleared.\n";
 
     // 4. Define vehicle lists with mapped real images
-    // Available image sources: cruiser.png, sports_bike.png, scooter.png
     $bikes = [
         ['make' => 'Royal Enfield', 'model' => 'Classic 350', 'year' => 2022, 'price_day' => 1200.00, 'price_hour' => 100.00, 'image_source' => 'cruiser.png'],
         ['make' => 'Harley-Davidson', 'model' => 'Iron 883', 'year' => 2021, 'price_day' => 4500.00, 'price_hour' => 400.00, 'image_source' => 'cruiser.png'],
@@ -114,7 +128,6 @@ try {
         ['make' => 'Ducati', 'model' => 'Scrambler Icon', 'year' => 2020, 'price_day' => 5500.00, 'price_hour' => 500.00, 'image_source' => 'cruiser.png'],
     ];
 
-    // Available image sources: sedan.png, sports_car.png, suv.png
     $cars = [
         ['make' => 'Toyota', 'model' => 'Corolla', 'year' => 2021, 'price_day' => 2500.00, 'price_hour' => 200.00, 'image_source' => 'sedan.png'],
         ['make' => 'Honda', 'model' => 'Civic', 'year' => 2022, 'price_day' => 2800.00, 'price_hour' => 250.00, 'image_source' => 'sedan.png'],
@@ -128,16 +141,17 @@ try {
         ['make' => 'Chevrolet', 'model' => 'Camaro', 'year' => 2020, 'price_day' => 12000.00, 'price_hour' => 1000.00, 'image_source' => 'sports_car.png'],
     ];
 
-    // Ensure uploads directory structure exists
-    if (!is_dir($absoluteUploadDir)) {
-        mkdir($absoluteUploadDir, 0755, true);
+    // Ensure uploads and uploads/vehicles directory structure exists
+    $vehiclesUploadDir = $absoluteUploadDir . '/vehicles';
+    if (!is_dir($vehiclesUploadDir)) {
+        mkdir($vehiclesUploadDir, 0755, true);
     }
 
     // Override base URL to https://bike.ggnproperty.com as requested
     $baseUrl = 'https://bike.ggnproperty.com';
     $seedSourcesDir = __DIR__ . '/../storage/seed_sources';
 
-    // 5. Seed Bikes with Real Images
+    // 5. Seed Bikes with Real Images in structured 'vehicles' folder
     echo "Seeding 10 bikes with real images...\n";
     $bikeCount = 0;
     foreach ($bikes as $index => $b) {
@@ -151,8 +165,8 @@ try {
         }
 
         $fileName = $imageId . '.png';
-        $relativeFilePath = 'uploads/' . $fileName;
-        $destPath = $absoluteUploadDir . '/' . $fileName;
+        $relativeFilePath = 'uploads/vehicles/' . $fileName;
+        $destPath = $vehiclesUploadDir . '/' . $fileName;
 
         // Copy real image file
         copy($sourceFilePath, $destPath);
@@ -171,8 +185,7 @@ try {
         ]);
 
         $licensePlate = sprintf('MH-12-BK-%04d', 1000 + $index);
-        $imageUrl = $baseUrl . '/v1/images?id=' . $imageId;
-        $imagesJson = json_encode([$imageUrl]);
+        $imagesJson = json_encode([$relativeFilePath]);
 
         // Insert vehicle
         $vehStmt = $pdo->prepare("
@@ -192,9 +205,9 @@ try {
         ]);
         $bikeCount++;
     }
-    echo "Successfully seeded {$bikeCount} bikes with real images.\n";
+    echo "Successfully seeded {$bikeCount} bikes with real images inside vehicles/ subfolder.\n";
 
-    // 6. Seed Cars with Real Images
+    // 6. Seed Cars with Real Images in structured 'vehicles' folder
     echo "Seeding 10 cars with real images...\n";
     $carCount = 0;
     foreach ($cars as $index => $c) {
@@ -208,8 +221,8 @@ try {
         }
 
         $fileName = $imageId . '.png';
-        $relativeFilePath = 'uploads/' . $fileName;
-        $destPath = $absoluteUploadDir . '/' . $fileName;
+        $relativeFilePath = 'uploads/vehicles/' . $fileName;
+        $destPath = $vehiclesUploadDir . '/' . $fileName;
 
         // Copy real image file
         copy($sourceFilePath, $destPath);
@@ -228,8 +241,7 @@ try {
         ]);
 
         $licensePlate = sprintf('MH-12-CR-%04d', 1000 + $index);
-        $imageUrl = $baseUrl . '/v1/images?id=' . $imageId;
-        $imagesJson = json_encode([$imageUrl]);
+        $imagesJson = json_encode([$relativeFilePath]);
 
         // Insert vehicle
         $vehStmt = $pdo->prepare("
@@ -249,8 +261,8 @@ try {
         ]);
         $carCount++;
     }
-    echo "Successfully seeded {$carCount} cars with real images.\n";
-    echo "\nAll vehicles seeded successfully with real images and base URL https://bike.ggnproperty.com!\n";
+    echo "Successfully seeded {$carCount} cars with real images inside vehicles/ subfolder.\n";
+    echo "\nAll vehicles seeded successfully with real images inside uploads/vehicles/ and base URL https://bike.ggnproperty.com!\n";
 
 } catch (Throwable $e) {
     echo "\nFATAL ERROR: Seeding failed!\n";

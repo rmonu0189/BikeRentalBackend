@@ -77,6 +77,15 @@ final class ImageController
 
         $userId = (string) $claims['sub'];
         $uploadDir = __DIR__ . '/../../../../storage/uploads';
+
+        // Extract and sanitize optional folder name
+        $folderNameInput = $request->post('folder_name') ?? $request->query('folder_name') ?? $request->post('folder') ?? $request->query('folder') ?? '';
+        $folderName = preg_replace('/[^a-zA-Z0-9_-]/', '', (string) $folderNameInput);
+
+        if ($folderName !== '') {
+            $uploadDir .= '/' . $folderName;
+        }
+
         if (!is_dir($uploadDir)) {
             if (!mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
                 throw new HttpException('Failed to create upload directory.', 500);
@@ -91,7 +100,7 @@ final class ImageController
             throw new HttpException('Failed to save uploaded file.', 500);
         }
 
-        $relativeDir = 'uploads/' . $filename;
+        $relativeDir = 'uploads/' . ($folderName !== '' ? $folderName . '/' : '') . $filename;
 
         // Save record to database
         try {
@@ -115,59 +124,112 @@ final class ImageController
         ], 201);
     }
 
-    /**
-     * Retrieve and stream an image securely.
-     */
     public function getSecure(Request $request): void
     {
-        // Bearer token must be authenticated
-        $claims = AuthMiddleware::requireAuth($request);
-        if ($claims === null) {
-            return;
-        }
+        $sig = $request->query('sig');
 
-        $id = $request->query('id');
-        if ($id === null || trim($id) === '') {
-            throw new HttpException('Image ID is required.', 400);
-        }
+        if ($sig === null) {
+            // ================= LEGACY / BACKWARDS-COMPATIBLE FALLBACK =================
+            // Bearer token must be authenticated
+            $claims = AuthMiddleware::requireAuth($request);
+            if ($claims === null) {
+                return;
+            }
 
-        $image = ImageRepository::findById(trim($id));
-        if ($image === null) {
-            throw new HttpException('Image not found.', 404);
-        }
+            $id = $request->query('id');
+            if ($id === null || trim($id) === '') {
+                throw new HttpException('Image ID is required.', 400);
+            }
 
-        // Authorization Checks
-        $isOwner = ((string) $claims['sub'] === $image['uploaded_by']);
-        $isAdmin = $this->isAdmin($claims);
-        $allowed = $isOwner || $isAdmin;
+            $image = ImageRepository::findById(trim($id));
+            if ($image === null) {
+                throw new HttpException('Image not found.', 404);
+            }
 
-        if (!$allowed) {
-            // Find referencing vehicle in vehicles table
-            $vehicle = ImageRepository::findReferencingVehicle($image['id']);
-            if ($vehicle !== null) {
-                // If the vehicle is approved, anyone authenticated can view it
-                if ($vehicle['status'] === 'approved') {
-                    $allowed = true;
-                } else {
-                    // If vehicle is pending/rejected, only the vehicle owner (or admin/uploader) can view it
-                    $isVehicleOwner = ((string) $claims['sub'] === $vehicle['owner_id']);
-                    if ($isVehicleOwner) {
+            // Authorization Checks
+            $isOwner = ((string) $claims['sub'] === $image['uploaded_by']);
+            $isAdmin = $this->isAdmin($claims);
+            $allowed = $isOwner || $isAdmin;
+
+            if (!$allowed) {
+                // Find referencing vehicle in vehicles table
+                $vehicle = ImageRepository::findReferencingVehicle($image['id']);
+                if ($vehicle !== null) {
+                    // If the vehicle is approved, anyone authenticated can view it
+                    if ($vehicle['status'] === 'approved') {
                         $allowed = true;
+                    } else {
+                        // If vehicle is pending/rejected, only the vehicle owner can view it
+                        $isVehicleOwner = ((string) $claims['sub'] === $vehicle['owner_id']);
+                        if ($isVehicleOwner) {
+                            $allowed = true;
+                        }
                     }
                 }
             }
-        }
 
-        if (!$allowed) {
-            throw new HttpException('Forbidden. You do not have permission to access this image.', 403);
+            if (!$allowed) {
+                throw new HttpException('Forbidden. You do not have permission to access this image.', 403);
+            }
+
+            $path = $image['file_path'];
+            $mimeType = $image['mime_type'];
+            $fileSize = $image['file_size'];
+        } else {
+            // ================= STATELESS SIGNED URL VALIDATION (0 DB QUERIES) =================
+            // 1. Verify JWT (Stateless Token Validation - no DB query)
+            $authHeader = $request->header('Authorization');
+            if ($authHeader === null || !str_starts_with($authHeader, 'Bearer ')) {
+                throw new HttpException('Unauthorized', 401);
+            }
+
+            $token = trim(substr($authHeader, 7));
+            $claims = \App\Core\Jwt::verify($token);
+            if ($claims === null) {
+                throw new HttpException('Unauthorized', 401);
+            }
+
+            // 2. Validate Signed URL query parameters
+            $path = \App\Core\SecureUrl::verify($request);
+            if ($path === null) {
+                throw new HttpException('Forbidden. Invalid or expired URL signature.', 403);
+            }
+
+            $type = $request->query('type');
+            $owner = $request->query('owner') ?? '';
+
+            // 3. Enforce access control rules statelessly
+            $allowed = false;
+            $role = (string) ($claims['role'] ?? '');
+            $isAdmin = in_array($role, ['admin', 'staff', 'manager'], true);
+
+            if ($type === 'vehicle') {
+                // Any authenticated user can view signed vehicle images
+                $allowed = true;
+            } elseif ($type === 'kyc') {
+                // Only the owner of the document or an admin can view KYC documents
+                $isOwner = ((string) $claims['sub'] === $owner);
+                $allowed = $isOwner || $isAdmin;
+            }
+
+            if (!$allowed) {
+                throw new HttpException('Forbidden. Access denied.', 403);
+            }
+
+            $mimeType = str_ends_with($path, '.png') ? 'image/png' : 'image/jpeg';
+            $fileSize = null; // Will calculate dynamically from disk
         }
 
         // Stream physical file
         $storageDir = __DIR__ . '/../../../../storage';
-        $fullPath = $storageDir . '/' . $image['file_path'];
+        $fullPath = $storageDir . '/' . $path;
 
         if (!is_file($fullPath)) {
             throw new HttpException('Physical image file not found on disk.', 404);
+        }
+
+        if ($fileSize === null) {
+            $fileSize = filesize($fullPath);
         }
 
         // Clean output buffer to ensure clean file transfer
@@ -175,8 +237,8 @@ final class ImageController
             ob_end_clean();
         }
 
-        header('Content-Type: ' . $image['mime_type']);
-        header('Content-Length: ' . $image['file_size']);
+        header('Content-Type: ' . $mimeType);
+        header('Content-Length: ' . $fileSize);
         header('Cache-Control: private, max-age=86400');
         readfile($fullPath);
         exit;
